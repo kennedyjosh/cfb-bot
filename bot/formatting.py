@@ -1,0 +1,95 @@
+"""Pure formatting functions for bot command responses. No Discord dependency."""
+
+from solver.model import Assignment, Request, SolverResult
+
+
+def fmt_conf_schedule_set(team: str, weeks: list[int], *, updated: bool) -> str:
+    """Response for a successful /conference_schedule command."""
+    verb = "Updated" if updated else "Set"
+    weeks_str = " ".join(str(w) for w in sorted(weeks))
+    return (
+        f"{verb} conference schedule for {team}.\n"
+        f"{team}: conference games on weeks {weeks_str}."
+    )
+
+
+def fmt_request_added(team1: str, team2: str, index: int, total: int) -> str:
+    """Response for a successful /request add command."""
+    return f"Request added: {team1} vs. {team2}. (Request #{index} of {total})"
+
+
+def fmt_schedule_result(result: SolverResult) -> str:
+    """Format the full schedule result for /schedule."""
+    total = len(result.assignments) + len(result.unscheduled)
+    fulfilled = len(result.assignments)
+
+    lines = [f"Schedule Results \u2014 {fulfilled} of {total} requests fulfilled", ""]
+
+    lines.append("Fulfilled:")
+    if not result.assignments:
+        lines.append("  (none)")
+    else:
+        sorted_assignments = sorted(
+            result.assignments,
+            key=lambda a: (a.week, a.request.team_a),
+        )
+        for a in sorted_assignments:
+            lines.append(f"  Week {a.week}: {a.request.team_a} vs. {a.request.team_b}")
+
+    if result.unscheduled:
+        lines.append("")
+        lines.append("Not scheduled:")
+        for r in result.unscheduled:
+            lines.append(f"  {r.team_a} vs. {r.team_b}")
+
+    return "\n".join(lines)
+
+
+def fmt_schedule_show(team: str, assignments: list[Assignment]) -> str:
+    """Format the per-team schedule for /schedule show."""
+    if not assignments:
+        return f"{team} has no non-conference games scheduled."
+
+    sorted_assignments = sorted(assignments, key=lambda a: a.week)
+    lines = [f"Non-conference schedule for {team}:"]
+    for a in sorted_assignments:
+        opponent = (
+            a.request.team_b if a.request.team_a == team else a.request.team_a
+        )
+        lines.append(f"  Week {a.week}: {team} vs. {opponent}")
+
+    return "\n".join(lines)
+
+
+def fmt_teams(
+    ignored: list[str],
+    unparsable: list[str],
+) -> str:
+    """Format the /teams response listing unresolved members."""
+    if not ignored and not unparsable:
+        return "All members have been successfully mapped to a team."
+
+    lines = ["Members not mapped to a team:"]
+
+    if ignored:
+        lines.append("")
+        lines.append("Ignored (matched ignore_regex):")
+        for name in ignored:
+            lines.append(f"  {name}")
+
+    if unparsable:
+        lines.append("")
+        lines.append("Unparsable (name not recognized):")
+        for name in unparsable:
+            lines.append(f"  {name}")
+
+    return "\n".join(lines)
+
+
+ADMIN_WARNING = (
+    "Warning: No admin is configured for this server. "
+    "All commands are currently unrestricted. "
+    "Set `admin.id` in `config/<guild_id>.toml` to restrict admin access."
+)
+
+NO_PERMISSION = "You do not have permission to use this command."

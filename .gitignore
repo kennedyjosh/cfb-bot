@@ -10,3 +10,8 @@ config/*.toml
 
 # Ignore build artifacts
 __pycache__
+.venv/
+*.whl
+
+# Ignore sandbox proxy CA cert (sandbox-specific, not needed in repo)
+proxy-ca.crt

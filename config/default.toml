@@ -1,0 +1,22 @@
+# CFB 26 Dynasty Scheduler — Default Dynasty Configuration
+#
+# This file defines all supported per-dynasty config keys and their defaults.
+# It is the canonical reference for available settings.
+#
+# Per-dynasty overrides live in config/<guild_id>.toml, which is created
+# automatically on first run using these defaults.
+
+[admin]
+
+# The Discord user ID or role ID that has admin privileges for this dynasty.
+# This must be explicitly set during dynasty initialization — there is no
+# sensible default. Accepts either a user ID or a role ID as a string.
+# The bot will resolve whether this refers to a user or role automatically.
+# Example: "123456789012345678"
+id = ""
+
+[teams]
+
+# A regex pattern used to extract a team name from a Discord user's display name.
+# The pattern must contain a named capture group called `team`.
+name_regex = "^(?P<team>.+)$"

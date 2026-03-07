@@ -1,0 +1,12 @@
+# Ignore dynasty-specfic config, but keep the default example
+config/*.toml
+!config/default.toml
+
+# Ignore local Claude config
+.claude
+
+# Ignore database files
+*.db
+
+# Ignore build artifacts
+__pycache__

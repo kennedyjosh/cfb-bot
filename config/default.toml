@@ -15,7 +15,13 @@
 # Example: "123456789012345678"
 id = ""
 
-[teams]
+[members]
+
+# Regex applied to raw display names. Members whose display name matches
+# are excluded from team scraping. Matched with re.search(), so it does
+# not need to cover the full name. Always treated as case-insensitive
+# regardless of flags included in the pattern.
+ignore_regex = "inactive"
 
 # A regex pattern used to extract a team name from a Discord user's display name.
 # The pattern must contain a named capture group called `team`.

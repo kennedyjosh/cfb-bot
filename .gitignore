@@ -1,6 +1,7 @@
 # Ignore dynasty-specfic config, but keep the default example
 config/*.toml
 !config/default.toml
+!config/nicknames.toml
 
 # Ignore local Claude config
 .claude

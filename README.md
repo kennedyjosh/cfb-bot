@@ -82,7 +82,7 @@ Home/away assignment is optimized separately to minimize per-team imbalance acro
 ```
 /schedule show <team>
 ```
-Show one team's full schedule: conference weeks, non-conference games (with home/away notation), and bye weeks. Conference schedule is shown immediately after `/conference_schedule` is entered; non-conference games and bye weeks appear once `/schedule create` has been run.
+Show one team's full schedule: conference weeks, non-conference games (with home/away notation), bye weeks, and a CPU game recommendation (how many home/away CPU games to add to fill the schedule and maintain home/away balance). Conference schedule is shown immediately after `/conference_schedule` is entered; non-conference games, bye weeks, and CPU advice appear once `/schedule create` has been run.
 
 ```
 /teams

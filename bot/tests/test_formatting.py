@@ -670,6 +670,88 @@ class TestFmtScheduleShowByeWeeks:
 
 
 # ---------------------------------------------------------------------------
+# fmt_schedule_show — CPU game advice
+# ---------------------------------------------------------------------------
+
+
+class TestFmtScheduleShowCpuAdvice:
+    def test_no_advice_when_schedule_full(self):
+        # 11 conf + 1 NC = nc_cap 1, nc_scheduled 1 → 0 open slots
+        assignments = [_assignment("Alabama", "Army", 12, home_team="Alabama")]
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 12)),  # 11 conf weeks → nc_cap=1
+            assignments=assignments,
+            conference_home_games=6,
+        )
+        assert "Open slots" not in text
+
+    def test_no_advice_when_nc_not_scheduled(self):
+        # Solver hasn't run — home/away unknown, can't give precise advice
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 9)),
+            assignments=None,
+            conference_home_games=4,
+        )
+        assert "Open slots" not in text
+
+    def test_advice_shows_open_slot_count(self):
+        # 10 conf + 0 NC = nc_cap 2, nc_scheduled 0 → 2 open slots
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 11)),  # 10 conf → nc_cap=2
+            assignments=[],
+            conference_home_games=5,
+        )
+        assert "Open slots: 2" in text
+
+    def test_balanced_advice(self):
+        # 10 conf (5H 5A), 0 NC, nc_cap=2 → current 5H 5A → need 1H 1A
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 11)),  # nc_cap=2
+            assignments=[],
+            conference_home_games=5,
+        )
+        assert "1 home" in text
+        assert "1 away" in text
+
+    def test_all_home_advice(self):
+        # 10 conf (2H 8A), 0 NC, nc_cap=2 → current 2H 8A → need 2H 0A
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 11)),  # nc_cap=2
+            assignments=[],
+            conference_home_games=2,
+        )
+        assert "2 home" in text
+        assert "0 away" in text
+
+    def test_all_away_advice(self):
+        # 10 conf (8H 2A), 0 NC, nc_cap=2 → current 8H 2A → need 0H 2A
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 11)),  # nc_cap=2
+            assignments=[],
+            conference_home_games=8,
+        )
+        assert "0 home" in text
+        assert "2 away" in text
+
+    def test_advice_after_bye_weeks(self):
+        # CPU advice appears after bye weeks line
+        # 10 conf + 0 NC → bye weeks exist, and 2 open NC slots
+        text = fmt_schedule_show(
+            "Alabama",
+            conference_weeks=list(range(1, 11)),  # nc_cap=2
+            assignments=[],
+            conference_home_games=5,
+        )
+        assert text.index("Bye") < text.index("Open slots")
+
+
+# ---------------------------------------------------------------------------
 # fmt_teams
 # ---------------------------------------------------------------------------
 

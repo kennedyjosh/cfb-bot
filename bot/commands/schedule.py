@@ -155,6 +155,7 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         state = bot_ref.get_guild_state(interaction.guild_id)
 
         conference_weeks = state.conference_schedules.get(team)
+        conference_home_games = state.conference_home_games.get(team, 0)
 
         if state.last_result is None:
             assignments = None
@@ -173,7 +174,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
                 interaction.guild_id, team, len(assignments), interaction.user,
             )
 
-        msg = fmt_schedule_show(team, conference_weeks, assignments)
+        msg = fmt_schedule_show(
+            team, conference_weeks, assignments,
+            conference_home_games=conference_home_games,
+        )
         if bot_ref.admin_warning(interaction.guild_id):
             msg = bot_ref.admin_warning(interaction.guild_id) + "\n\n" + msg
 

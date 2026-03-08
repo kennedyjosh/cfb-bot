@@ -127,6 +127,8 @@ def fmt_schedule_show(
     team: str,
     conference_weeks: list[int] | None,
     assignments: list[Assignment] | None,
+    *,
+    conference_home_games: int = 0,
 ) -> str:
     """Format the per-team schedule for /schedule show.
 
@@ -162,13 +164,24 @@ def fmt_schedule_show(
             else:
                 lines.append(f"    Week {a.week}: vs. {opponent}")
 
-    # Bye weeks — only when NC schedule is known
+    # Bye weeks and CPU game advice — only when NC schedule is known
     if assignments is not None:
         conf_set = frozenset(conference_weeks or [])
         nc_set = frozenset(a.week for a in assignments)
         bye_weeks = [w for w in range(1, 15) if w not in conf_set and w not in nc_set]
         if bye_weeks:
             lines.append(f"  Bye weeks: {' '.join(str(w) for w in bye_weeks)}")
+
+        nc_cap = 12 - len(conference_weeks or [])
+        remaining = nc_cap - len(assignments)
+        if remaining > 0:
+            nc_home = sum(1 for a in assignments if a.home_team == team)
+            current_home = conference_home_games + nc_home
+            cpu_home = max(0, min(remaining, 6 - current_home))
+            cpu_away = remaining - cpu_home
+            lines.append(
+                f"  Open slots: {remaining} — schedule {cpu_home} home, {cpu_away} away CPU game(s)"
+            )
 
     return "\n".join(lines)
 

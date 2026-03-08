@@ -25,6 +25,20 @@ After editing, the caller should run: `git add CHANGELOG.md` before committing.
 
 When releasing a version, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and create a new empty `## [Unreleased]` above it.
 
+After the release commit is made, create an annotated tag pointing to it:
+
+```bash
+git tag -a vX.Y.Z -m "Release X.Y.Z"
+```
+
+Then push the branch and tag together when network access is available:
+
+```bash
+git push --follow-tags
+```
+
+`--follow-tags` pushes the branch and any annotated tags reachable from the pushed commits in one command — no separate tag push needed.
+
 ## Choosing a Version Number
 
 Pick the version based on what's in `[Unreleased]` relative to the last release:

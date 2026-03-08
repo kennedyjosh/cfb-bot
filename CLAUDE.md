@@ -32,26 +32,70 @@ Do not let Discord concerns bleed into the solver, and do not put scheduling log
 
 ## Git Discipline
 
+### Branching — THIS IS MANDATORY, NOT OPTIONAL
+
+**Every feature MUST be developed on a dedicated branch. Never commit feature work directly to `main`.**
+
+The workflow is:
+1. Create a branch: `git checkout -b feature/<short-name>`
+2. Commit freely on the branch — small, frequent commits are encouraged
+3. When the feature is complete and all tests pass, merge into `main`
+4. Delete the feature branch after merging
+
+`main` must always be in a working, releasable state. If you are ever committing directly to `main`, stop and ask whether you should be on a branch.
+
+### Commits
+
 - Commit after every meaningful unit of work — a passing test, a completed command, a solver extension.
 - Write clear, imperative commit messages: `Add /conf command with week and home_games parsing`, not `updates`.
-- Use semantic versioning for releases. Maintain `CHANGELOG.md` at the project root.
-- Never commit broken code to `main`. Use a feature branch per feature.
+- Never commit broken code to `main` (or to any branch that will be immediately merged).
+- After every commit, the `/update-changelog` hook will fire automatically. Follow its instruction.
 
-## Changelog
+### Changelog
 
-Maintain `CHANGELOG.md` using [Keep a Changelog](https://keepachangelog.com) format with semantic versioning:
+`CHANGELOG.md` uses [Keep a Changelog](https://keepachangelog.com) format. It is maintained automatically via a post-commit hook that triggers `/update-changelog` after every `git commit`.
 
-- **MAJOR** version for breaking changes to command interfaces or data schema.
-- **MINOR** version for each completed feature (Features 1–5).
-- **PATCH** version for bug fixes and minor improvements within a feature.
+**Key rules:**
+- Always write to `[Unreleased]` — never directly to a versioned section.
+- Version bumps are a separate, intentional act — not part of the commit workflow.
+- Versioning follows semantic versioning: `0.1.0` when Feature 1 ships, `0.2.0` for Feature 2, `1.0.0` when the bot is stable for real use.
 
-Start at `0.1.0` when Feature 1 ships. Do not tag `1.0.0` until Feature 2 is complete and the bot is considered stable for real use.
+## Testing
 
-## Testing Philosophy
+Run tests before merging any branch. There are two modes:
 
-Test all three layers. For the solver and db layers, test thoroughly. For the bot layer, keep command handlers thin — extract all non-trivial logic (argument parsing, input validation, response formatting) into pure functions with no Discord dependency, and test those functions directly. The only acceptable untested surface area is the Discord framework wiring itself. See `adr/004-testing-strategy.md` for the full strategy.
+- **`make test-local`** — fast (~1s), runs pytest in `.venv/`. Use this during development. Run `make venv` once first to set up the environment.
+- **`make test`** — runs pytest inside a `linux/amd64` Docker container. Use this before merging to confirm correctness in the canonical environment.
 
-Run tests with `pytest` from the project root before every commit. If a test is failing and the fix is non-trivial, commit a `FIXME` note and open a follow-up — do not let a flaky test become an excuse to skip the suite.
+See the README for full setup instructions for both local and sandbox environments.
+
+## Sandbox Development
+
+This section is specifically for AI agents running in a LinuxKit/Docker sandbox on Apple Silicon.
+
+### Why tests need Docker in the sandbox
+
+OR-Tools wheels for `aarch64` use CPU instructions not available in LinuxKit. Running pytest directly in the sandbox crashes with `SIGILL`. Do not attempt to work around this — use Docker.
+
+### Running tests in the sandbox
+
+Before the first run, ensure `pypi.org:443` is allowed through the sandbox firewall. Then:
+
+```bash
+# Copy the proxy CA cert to the project root (required once per sandbox session)
+cp /usr/local/share/ca-certificates/proxy-ca.crt /Users/josh/Code/cfb-bot/proxy-ca.crt
+
+# Run tests
+make test PROXY=http://host.docker.internal:3128
+```
+
+Subsequent runs in the same session will use the Docker layer cache — only the first run (or after requirements change) is slow.
+
+**`make test-local` does not work in the sandbox.** Do not use it.
+
+### What `make test` does
+
+It builds a `linux/amd64` Docker image, installs dependencies via pip through the sandbox proxy, and runs pytest inside the container. All 108+ tests should pass.
 
 ## Per-Dynasty Configurability
 

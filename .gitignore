@@ -3,8 +3,10 @@ config/*.toml
 !config/default.toml
 !config/nicknames.toml
 
-# Ignore local Claude config
-.claude
+# Ignore Claude session data, but keep project settings and commands
+.claude/*
+!.claude/settings.json
+!.claude/commands/
 
 # Ignore database files
 *.db

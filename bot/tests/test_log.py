@@ -5,7 +5,7 @@ import re
 
 import pytest
 
-from bot.log import ColoredFormatter
+from bot.log import ColoredFormatter, parse_log_level
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
@@ -51,3 +51,22 @@ class TestColoredFormatter:
         for level in (logging.ERROR, logging.WARNING):
             output = self.fmt.format(make_record(level))
             assert output.endswith("\x1b[0m"), f"No reset at end of level {level} output: {output!r}"
+
+
+class TestParseLogLevel:
+    def test_info(self):
+        assert parse_log_level("INFO") == logging.INFO
+
+    def test_debug(self):
+        assert parse_log_level("DEBUG") == logging.DEBUG
+
+    def test_warning(self):
+        assert parse_log_level("WARNING") == logging.WARNING
+
+    def test_case_insensitive(self):
+        assert parse_log_level("debug") == logging.DEBUG
+        assert parse_log_level("Warning") == logging.WARNING
+
+    def test_invalid_falls_back_to_info(self):
+        assert parse_log_level("VERBOSE") == logging.INFO
+        assert parse_log_level("") == logging.INFO

@@ -12,7 +12,7 @@ from discord import app_commands
 
 from bot.commands import conf, request, schedule, teams
 from bot.config import load_guild_config, load_valid_teams
-from bot.log import ColoredFormatter
+from bot.log import ColoredFormatter, parse_log_level
 from bot.formatting import ADMIN_WARNING, NO_PERMISSION
 from bot.parsing import parse_display_name
 from bot.state import GuildState
@@ -102,10 +102,13 @@ class CFBBot(discord.Client):
                 log.error("Guild %d: %s — check members.name_regex in config", guild.id, exc)
                 return
             if is_ignored:
+                log.debug("  ignored:    %s", member.display_name)
                 unresolved.append(UnresolvedMember(member.display_name, is_ignored=True))
             elif team_name is None:
+                log.debug("  unresolved: %s", member.display_name)
                 unresolved.append(UnresolvedMember(member.display_name, is_ignored=False))
             else:
+                log.debug("  resolved:   %s → %s", member.display_name, team_name)
                 human_teams[team_name] = member.id
 
         self._human_teams[guild.id] = human_teams
@@ -165,9 +168,10 @@ class CFBBot(discord.Client):
 
 
 def run() -> None:
+    level = parse_log_level(os.environ.get("LOG_LEVEL", "INFO"))
     handler = logging.StreamHandler()
     handler.setFormatter(ColoredFormatter())
-    logging.basicConfig(level=logging.INFO, handlers=[handler])
+    logging.basicConfig(level=level, handlers=[handler])
     token = os.environ.get("DISCORD_TOKEN")
     if not token:
         raise RuntimeError("DISCORD_TOKEN environment variable is not set.")

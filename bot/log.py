@@ -2,6 +2,14 @@
 
 import logging
 
+
+def parse_log_level(level_str: str) -> int:
+    """Convert a level name string to a logging level int, defaulting to INFO."""
+    level = getattr(logging, level_str.upper(), None)
+    if isinstance(level, int):
+        return level
+    return logging.INFO
+
 _RESET = "\x1b[0m"
 _LEVEL_COLORS = {
     logging.ERROR: "\x1b[31m",    # red

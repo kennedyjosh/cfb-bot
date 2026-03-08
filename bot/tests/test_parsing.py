@@ -241,3 +241,9 @@ class TestParseDisplayName:
         )
         assert team is None
         assert ignored is True
+
+    def test_invalid_name_regex_raises_value_error(self):
+        # PCRE-style (?<team>...) is not valid Python regex; should raise ValueError
+        # with a clear message, not a raw re.error.
+        with pytest.raises(ValueError, match="name_regex"):
+            parse_display_name("Alabama", r"(?<team>.+)", DEFAULT_IGNORE_REGEX, VALID_TEAMS)

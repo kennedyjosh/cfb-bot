@@ -90,12 +90,16 @@ class CFBBot(discord.Client):
         async for member in guild.fetch_members(limit=None):
             if member.bot:
                 continue
-            team_name, is_ignored = parse_display_name(
-                member.display_name,
-                name_regex,
-                ignore_regex,
-                self.valid_teams,
-            )
+            try:
+                team_name, is_ignored = parse_display_name(
+                    member.display_name,
+                    name_regex,
+                    ignore_regex,
+                    self.valid_teams,
+                )
+            except ValueError as exc:
+                log.error("Guild %d: %s — check members.name_regex in config", guild.id, exc)
+                return
             if is_ignored:
                 unresolved.append(UnresolvedMember(member.display_name, is_ignored=True))
             elif team_name is None:

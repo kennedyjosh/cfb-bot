@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Invalid `members.name_regex` in a guild config (e.g. PCRE-style `(?<team>...)` instead of Python `(?P<team>...)`) now logs a clear error message instead of crashing the bot on startup
+
 ## [0.3.0] - 2026-03-08
 
 ### Changed

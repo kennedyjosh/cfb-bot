@@ -96,7 +96,10 @@ def parse_display_name(
     if re.search(ignore_regex, display_name, re.IGNORECASE):
         return None, True
 
-    match = re.search(name_regex, display_name)
+    try:
+        match = re.search(name_regex, display_name)
+    except re.error as exc:
+        raise ValueError(f"Invalid name_regex {name_regex!r}: {exc}") from exc
     if not match:
         return None, False
 

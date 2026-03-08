@@ -180,6 +180,24 @@ class TestFmtScheduleResultUnscheduled:
         text = fmt_schedule_result(result, {})
         assert text.index("Not scheduled") < text.index("Georgia")
 
+    def test_unscheduled_header_shows_count(self):
+        result = SolverResult(
+            assignments=[],
+            unscheduled=[_req("Alabama", "Auburn")],
+        )
+        text = fmt_schedule_result(result, {})
+        assert "Not scheduled (1):" in text
+
+    def test_multiple_unscheduled_shown(self):
+        result = SolverResult(
+            assignments=[],
+            unscheduled=[_req("Alabama", "Auburn"), _req("Georgia", "LSU")],
+        )
+        text = fmt_schedule_result(result, {})
+        assert "Not scheduled (2):" in text
+        assert "Alabama vs. Auburn" in text
+        assert "Georgia vs. LSU" in text
+
     def test_reason_no_common_open_week(self):
         # Alabama: weeks 1-7, Auburn: weeks 8-14 — every week is blocked for one of them.
         teams = {
@@ -267,6 +285,21 @@ class TestFmtScheduleResultImbalance:
         assert "Alabama" in text
         assert "home" in text
 
+    def test_imbalance_format_string(self):
+        # Alabama: 4 conf (4H 0A) + 4 NC (4H 0A) = 8H 0A → 8H 0A (+8 home)
+        teams = {"Alabama": _human("Alabama", [1, 2, 3, 4], conf_home=4)}
+        result = SolverResult(
+            assignments=[
+                _assignment("Alabama", "Auburn", 5, home_team="Alabama"),
+                _assignment("Alabama", "Georgia", 6, home_team="Alabama"),
+                _assignment("Alabama", "LSU", 7, home_team="Alabama"),
+                _assignment("Alabama", "Ole Miss", 8, home_team="Alabama"),
+            ],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result, teams)
+        assert "8H 0A (+8 home)" in text
+
     def test_imbalance_shown_for_away_heavy_team(self):
         # Alabama: 4 conf (0H 4A) + 2 NC (0H 2A) = 0H 6A → +6 away
         teams = {"Alabama": _human("Alabama", [1, 2, 3, 4], conf_home=0)}
@@ -281,6 +314,28 @@ class TestFmtScheduleResultImbalance:
         assert "imbalance" in text.lower()
         assert "Alabama" in text
         assert "away" in text
+
+    def test_multiple_teams_with_imbalance(self):
+        # Both Alabama and Auburn are home-heavy.
+        teams = {
+            "Alabama": _human("Alabama", [1, 2, 3, 4], conf_home=4),
+            "Auburn": _human("Auburn", [1, 2, 3, 4], conf_home=4),
+        }
+        result = SolverResult(
+            assignments=[
+                _assignment("Alabama", "LSU", 5, home_team="Alabama"),
+                _assignment("Alabama", "Ole Miss", 6, home_team="Alabama"),
+                _assignment("Auburn", "LSU", 7, home_team="Auburn"),
+                _assignment("Auburn", "Ole Miss", 8, home_team="Auburn"),
+            ],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result, teams)
+        imbalance_start = text.lower().index("imbalance")
+        schedule_start = text.index("Non-conference schedule")
+        imbalance_section = text[imbalance_start:schedule_start]
+        assert "Alabama" in imbalance_section
+        assert "Auburn" in imbalance_section
 
     def test_imbalance_section_before_schedule(self):
         # Imbalance section must appear before per-team schedule.
@@ -394,6 +449,39 @@ class TestFmtScheduleResultByTeam:
         )
         text = fmt_schedule_result(result, {"Alabama": _human("Alabama")})
         assert "Army" in text
+
+    def test_singular_game_label(self):
+        # "1 game" (not "1 games") when a team has exactly one NC game
+        result = SolverResult(
+            assignments=[_assignment("Alabama", "Auburn", 3, home_team="Alabama")],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result, {})
+        assert "Alabama (1 game):" in text
+
+    def test_plural_games_label(self):
+        result = SolverResult(
+            assignments=[
+                _assignment("Alabama", "Auburn", 3, home_team="Alabama"),
+                _assignment("Alabama", "Georgia", 5, home_team="Alabama"),
+            ],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result, {})
+        assert "Alabama (2 games):" in text
+
+    def test_unset_home_team_shows_vs_for_both_teams(self):
+        # home_team="" (unset) → both teams show "vs. opponent" (neutral display)
+        result = SolverResult(
+            assignments=[_assignment("Alabama", "Auburn", 3, home_team="")],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result, {})
+        # Both Alabama and Auburn sections should show "vs." not "at"
+        assert "at Alabama" not in text
+        assert "at Auburn" not in text
+        assert "vs. Auburn" in text
+        assert "vs. Alabama" in text
 
 
 # ---------------------------------------------------------------------------

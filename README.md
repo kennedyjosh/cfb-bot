@@ -11,26 +11,22 @@ The core scheduling problem is solved with **Google OR-Tools (CP-SAT)**. The Dis
 
 ## Setup
 
-1. **Install dependencies:**
-   ```
-   pip install -r requirements.txt
-   ```
-
-2. **Create a per-dynasty config file** (optional but recommended):
-   ```
-   cp config/default.toml config/<your_guild_id>.toml
-   ```
-   Edit the file to set `admin.id` to your Discord user ID or a role ID.
-
-3. **Set your bot token:**
+1. **Set your bot token:**
    ```
    export DISCORD_TOKEN=your_token_here
    ```
 
-4. **Run the bot:**
+2. **Run the bot:**
    ```
-   python main.py
+   make run
    ```
+   This creates a virtual environment and installs dependencies automatically on first run.
+
+3. **Create a per-dynasty config file** (optional but recommended):
+   ```
+   cp config/default.toml config/<your_guild_id>.toml
+   ```
+   Edit the file to set `admin.id` to your Discord user ID or a role ID. The bot will log a warning at startup for any guild that has no config file.
 
 ## Configuration
 
@@ -110,7 +106,8 @@ make test PROXY=http://host.docker.internal:3128
 
 | Target | Description |
 |---|---|
-| `make venv` | Create `.venv/` and install all dependencies |
+| `make run` | Run the bot (creates/updates `.venv/` automatically) |
+| `make venv` | Create `.venv/` and install all dependencies including dev |
 | `make test-local` | Run pytest in `.venv/` (fast; native only) |
 | `make test` | Build and run tests in a `linux/amd64` Docker container |
 

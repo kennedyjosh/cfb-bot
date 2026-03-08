@@ -13,7 +13,7 @@ else
 PROXY_ARGS :=
 endif
 
-.PHONY: test build-test test-local venv
+.PHONY: test build-test test-local venv run
 
 build-test:
 	docker build --platform linux/amd64 \
@@ -24,7 +24,17 @@ build-test:
 test: build-test
 	docker run --rm --platform linux/amd64 cfb-bot-test
 
-# Set up the local virtual environment with all dependencies.
+# Sentinel: create/update the venv when requirements.txt changes.
+.venv/bin/python: requirements.txt
+	python3 -m venv .venv
+	.venv/bin/pip install --upgrade pip -q
+	.venv/bin/pip install -r requirements.txt
+
+# Run the bot. Creates/updates the venv automatically if needed.
+run: .venv/bin/python
+	.venv/bin/python main.py
+
+# Set up the local virtual environment with all dependencies (including dev).
 venv:
 	python3 -m venv .venv
 	.venv/bin/pip install --upgrade pip -q

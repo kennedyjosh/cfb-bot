@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import discord
 from discord import app_commands
@@ -62,6 +63,15 @@ class CFBBot(discord.Client):
         self._guild_configs[guild.id] = config
         if guild.id not in self._guild_states:
             self._guild_states[guild.id] = GuildState()
+
+        guild_config_path = Path(__file__).parent.parent / "config" / f"{guild.id}.toml"
+        if not guild_config_path.exists():
+            log.warning(
+                "Guild %s (%d): no per-dynasty config found. "
+                "Running with defaults. Create config/%d.toml to configure this dynasty.",
+                guild.name, guild.id, guild.id,
+            )
+
         await self._scrape_members(guild, config)
         log.info(
             "Guild %s (%d): %d human teams, %d unresolved",

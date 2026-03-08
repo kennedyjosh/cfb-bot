@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-03-08
+
+### Changed
+
+- `/teams` unrecognized members now show as clickable mentions (`RandomGuy — @RandomGuy`) rather than plain display names
+
 ## [0.5.3] - 2026-03-08
 
 ### Changed

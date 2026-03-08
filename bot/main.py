@@ -30,6 +30,7 @@ class ResolvedMember:
 @dataclass
 class UnresolvedMember:
     display_name: str
+    user_id: int
     is_ignored: bool  # True = matched ignore_regex; False = unparsable
 
 
@@ -112,10 +113,10 @@ class CFBBot(discord.Client):
                 return
             if is_ignored:
                 log.debug("  ignored:    %s", member.display_name)
-                unresolved.append(UnresolvedMember(member.display_name, is_ignored=True))
+                unresolved.append(UnresolvedMember(member.display_name, member.id, is_ignored=True))
             elif team_name is None:
                 log.debug("  unresolved: %s", member.display_name)
-                unresolved.append(UnresolvedMember(member.display_name, is_ignored=False))
+                unresolved.append(UnresolvedMember(member.display_name, member.id, is_ignored=False))
             else:
                 log.debug("  resolved:   %s → %s", member.display_name, team_name)
                 human_teams[team_name] = member.id

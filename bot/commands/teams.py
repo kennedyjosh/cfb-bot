@@ -32,7 +32,7 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         )
 
         resolved_pairs = [(m.team, m.user_id) for m in resolved]
-        unrecognized = [m.display_name for m in unresolved]
+        unrecognized = [(m.display_name, m.user_id) for m in unresolved]
 
         msg = fmt_teams(resolved=resolved_pairs, unrecognized=unrecognized)
         if bot_ref.admin_warning(interaction.guild_id):

@@ -219,37 +219,37 @@ class TestFmtTeams:
         text = fmt_teams(resolved=[("Alabama", 123)], unrecognized=[])
         assert "Alabama — <@123>" in text
 
-    def test_shows_unrecognized_member(self):
-        text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
-        assert "RandomGuy" in text
+    def test_shows_unrecognized_member_mention(self):
+        text = fmt_teams(resolved=[], unrecognized=[("RandomGuy", 999)])
+        assert "<@999>" in text
+
+    def test_unrecognized_sorted_alphabetically(self):
+        text = fmt_teams(resolved=[], unrecognized=[("Zeke", 1), ("Aaron", 2)])
+        assert text.index("Aaron") < text.index("Zeke")
 
     def test_resolved_sorted_alphabetically(self):
         text = fmt_teams(resolved=[("Georgia", 3), ("Alabama", 1), ("Auburn", 2)], unrecognized=[])
         assert text.index("Alabama") < text.index("Auburn") < text.index("Georgia")
-
-    def test_unrecognized_sorted_alphabetically(self):
-        text = fmt_teams(resolved=[], unrecognized=["Zeke", "Aaron"])
-        assert text.index("Aaron") < text.index("Zeke")
 
     def test_members_section_header_with_count(self):
         text = fmt_teams(resolved=[("Alabama", 1), ("Auburn", 2)], unrecognized=[])
         assert "Members (2):" in text
 
     def test_unrecognized_section_header_with_count(self):
-        text = fmt_teams(resolved=[], unrecognized=["RandomGuy", "OtherGuy"])
+        text = fmt_teams(resolved=[], unrecognized=[("RandomGuy", 1), ("OtherGuy", 2)])
         assert "Unrecognized (2):" in text
 
     def test_no_jargon_in_output(self):
-        text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
+        text = fmt_teams(resolved=[], unrecognized=[("RandomGuy", 99)])
         assert "ignore_regex" not in text
         assert "unparsable" not in text.lower()
 
     def test_both_sections_shown(self):
-        text = fmt_teams(resolved=[("Alabama", 1)], unrecognized=["RandomGuy"])
+        text = fmt_teams(resolved=[("Alabama", 1)], unrecognized=[("RandomGuy", 99)])
         assert "Members (1):" in text
         assert "Alabama — <@1>" in text
         assert "Unrecognized (1):" in text
-        assert "RandomGuy" in text
+        assert "<@99>" in text
 
     def test_empty_both_shows_fallback(self):
         text = fmt_teams(resolved=[], unrecognized=[])

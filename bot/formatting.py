@@ -72,7 +72,7 @@ def fmt_schedule_show(team: str, assignments: list[Assignment]) -> str:
 
 def fmt_teams(
     resolved: list[tuple[str, int]],
-    unrecognized: list[str],
+    unrecognized: list[tuple[str, int]],
 ) -> str:
     """Format the /teams response listing all members."""
     lines = []
@@ -86,8 +86,8 @@ def fmt_teams(
         if lines:
             lines.append("")
         lines.append(f"Unrecognized ({len(unrecognized)}):")
-        for name in sorted(unrecognized):
-            lines.append(f"  {name}")
+        for name, user_id in sorted(unrecognized):
+            lines.append(f"  {name} — <@{user_id}>")
 
     if not lines:
         lines.append("No members found.")

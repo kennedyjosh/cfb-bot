@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-03-08
+
 ### Changed
 
 - `/schedule create` output redesigned: schedule now listed by team (each team appears once per game), unscheduled games with inferred reasons shown at top, home/away imbalance warnings shown for any team with a skew of 2+ games, hint to use `/schedule show` added at the end

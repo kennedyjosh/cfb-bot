@@ -189,7 +189,7 @@ Extend Feature 1 to also optimize the home/away assignment for each scheduled no
 #### Inputs
 
 - All inputs from Feature 1.
-- For each team: the total number of home games in their conference schedule, entered as part of the `/conf` command.
+- For each team: the total number of home games in their conference schedule, entered as part of the `/conference_schedule` command.
 
 #### Outputs
 
@@ -291,14 +291,14 @@ Commands are either admin-only or available to all users, as noted. This is a pr
 
 | Command | Description |
 |---|---|
-| `/conf <team> <weeks> <home_games>` | Enter a team's conference schedule. `weeks` is a space-separated list of week numbers (e.g. `1 3 5 7 9 11`); `home_games` is the count of home games among them. *(`home_games` argument added in Feature 2)* |
+| `/conference_schedule <team> <weeks> <home_games>` | Enter a team's conference schedule. `weeks` is a space-separated list of week numbers (e.g. `1 3 5 7 9 11`); `home_games` is the count of home games among them. *(`home_games` argument added in Feature 2)* |
 
 ### Scheduling Commands *(admin-only)*
 
 | Command | Description |
 |---|---|
 | `/request add <team1> <team2>` | Add a non-conference game request on behalf of two teams. |
-| `/schedule run` | Run the solver and output the full assigned schedule to the admin. |
+| `/schedule create` | Run the solver and output the full assigned schedule to the admin. |
 | `/season close` | Finalize the season, record home/away balances, and store any home-and-home obligations. *(Feature 5+)* |
 
 ### Query Commands *(all users — introduced in Feature 4)*

@@ -16,10 +16,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
     )
 
     @schedule_group.command(
-        name="run",
+        name="create",
         description="Run the solver and post the full schedule results.",
     )
-    async def schedule_run(interaction: discord.Interaction) -> None:
+    async def schedule_create(interaction: discord.Interaction) -> None:
         if not await bot_ref.check_admin(interaction):
             return
 
@@ -82,7 +82,7 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
 
         if state.last_result is None:
             await interaction.response.send_message(
-                "No schedule has been generated yet. Run /schedule run first.",
+                "No schedule has been generated yet. Run /schedule create first.",
                 ephemeral=True,
             )
             return

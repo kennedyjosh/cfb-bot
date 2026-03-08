@@ -36,7 +36,7 @@ All commands are admin-only in the current release.
 |---|---|
 | `/conference_schedule <team> <weeks>` | Enter a team's conference schedule. `weeks` is a space-separated list of week numbers (1–14). |
 | `/request add <team1> <team2>` | Add a non-conference game request between two teams. |
-| `/schedule run` | Run the optimizer and post the full schedule results. |
+| `/schedule create` | Run the optimizer and post the full schedule results. |
 | `/schedule show <team>` | Show the non-conference schedule for a single team. |
 | `/teams` | List Discord members who could not be mapped to a team. |
 
@@ -44,7 +44,7 @@ All commands are admin-only in the current release.
 
 1. The admin enters each human-controlled team's conference schedule with `/conference_schedule`.
 2. The admin adds desired non-conference matchups with `/request add`.
-3. `/schedule run` feeds all inputs to the CP-SAT solver, which maximizes the number of fulfilled requests while enforcing:
+3. `/schedule create` feeds all inputs to the CP-SAT solver, which maximizes the number of fulfilled requests while enforcing:
    - No game scheduled during either team's conference week
    - No team double-booked in the same week
    - Non-conference cap enforced (`12 - conference_games` per team)

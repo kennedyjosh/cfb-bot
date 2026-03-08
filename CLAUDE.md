@@ -50,7 +50,7 @@ The workflow is:
 ### Commits
 
 - Commit after every meaningful unit of work — a passing test, a completed command, a solver extension.
-- Write clear, imperative commit messages: `Add /conf command with week and home_games parsing`, not `updates`.
+- Write clear, imperative commit messages: `Add /conference_schedule command with week and home_games parsing`, not `updates`.
 - Never commit broken code to `main` (or to any branch that will be immediately merged).
 - Before every commit, the `/update-changelog` hook will fire if CHANGELOG.md is not staged. Update it first, then include it in the same commit.
 

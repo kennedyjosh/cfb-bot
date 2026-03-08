@@ -67,7 +67,7 @@ Simple cases (a team with one conference game, a single request) are defined inl
 
 Command handlers should be kept as thin as possible — they receive Discord input, call a pure function, and return a response. Any non-trivial logic (argument parsing, input validation, response formatting) must be extracted into plain Python functions with no Discord dependency, and those functions must be tested like any other unit.
 
-For example, the argument parsing for `/conf` should live in a standalone function `parse_conf_args(weeks_str, home_games) -> ConferenceSchedule` that is tested directly. The command handler itself just calls that function and passes the result to the db layer — no test needed for the wiring itself.
+For example, the argument parsing for `/conference_schedule` should live in a standalone function `parse_conf_args(weeks_str, home_games) -> ConferenceSchedule` that is tested directly. The command handler itself just calls that function and passes the result to the db layer — no test needed for the wiring itself.
 
 The only untested surface area in the bot layer should be the Discord framework wiring: registering commands, receiving interactions, and sending responses. This is framework code, not application code, and is an acceptable testing gap.
 

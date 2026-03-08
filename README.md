@@ -68,7 +68,7 @@ Remove a previously added request.
 /schedule create
 ```
 
-Runs the CP-SAT optimizer and posts the full schedule publicly. Each game is shown as `{home} vs. {away}` or `{away} at {home}`. Games that couldn't be assigned a week are listed as unscheduled.
+Runs the CP-SAT optimizer and posts the full schedule publicly. Results are listed by team; each game shows `vs. {opponent}` (home) or `at {opponent}` (away). Games that couldn't be scheduled are listed at the top with an inferred reason. Teams with a home/away imbalance of 2+ games are flagged.
 
 The solver enforces:
 - No game scheduled during either team's conference week

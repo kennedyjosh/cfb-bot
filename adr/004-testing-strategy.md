@@ -1,6 +1,6 @@
 # ADR-004: Testing Strategy
 
-**Status:** Accepted  
+**Status:** Accepted (amended March 2026)
 **Date:** March 2026
 
 ---
@@ -82,3 +82,43 @@ The only untested surface area in the bot layer should be the Discord framework 
 - Tests are run with `pytest` from the project root, which discovers all `tests/` subdirectories automatically.
 - Coverage is reported with `pytest --cov` and reviewed as part of each feature's completion, but no CI gate is enforced on the number.
 - The testing philosophy section in `CLAUDE.md` defers to this ADR for detail.
+
+---
+
+## Amendment — Integration Tests (March 2026)
+
+### Context
+
+As the bot layer grew, a gap emerged between the unit tests: nothing verifies that the layers compose correctly end-to-end. The command handlers extract data from `GuildState`, build solver input, call the solver, and pass the result to the formatter. Each step is unit-tested in isolation, but a field name mismatch or wrong data type crossing a layer boundary would go undetected.
+
+### Decision
+
+Add a top-level `tests/` directory at the project root for integration tests. This is the one exception to the "tests live within each layer's subfolder" rule, and it is intentional: integration tests span layers by definition and do not belong to any single one.
+
+```
+tests/
+  conftest.py          ← shared fixtures (realistic GuildState setups, etc.)
+  test_integration.py  ← cross-layer workflow tests
+```
+
+### What integration tests cover
+
+Integration tests exercise the full application data flow without mocking Discord:
+
+- Populate `GuildState` with conference schedules and requests
+- Build solver input as the command handler does
+- Run `solve()` and `assign_home_away()`
+- Pass the result to the formatters (`fmt_schedule_result`, `fmt_schedule_show`)
+- Assert on the combined output
+
+This catches bugs at the seams: wrong field extraction from state, mismatched data structures between solver output and formatter input, and incorrect end-to-end behavior on realistic multi-team scenarios.
+
+### What integration tests do not cover
+
+- Discord framework wiring (same acceptable gap as unit tests)
+- Database layer (no DB yet; add integration tests there when persistence is implemented)
+- The solver's internal constraint logic (already covered exhaustively by solver unit tests)
+
+### Guidance
+
+Integration test scenarios should be realistic but not exhaustive. One well-chosen scenario (e.g. a four-team dynasty with a mix of fulfilled and unscheduled requests) covers more meaningful ground than many narrow cases. Keep the number of integration tests small — they are a safety net for cross-layer composition, not a replacement for unit tests.

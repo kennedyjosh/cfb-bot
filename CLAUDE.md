@@ -55,42 +55,19 @@ The workflow is:
 
 `CHANGELOG.md` is maintained via `/update-changelog`, triggered automatically before every `git commit`. See that command for format and rules.
 
-## Testing
+## Running Tests
 
-Run tests before merging any branch. There are two modes:
-
-- **`make test-local`** — fast (~1s), runs pytest in `.venv/`. Use this during development. Run `make venv` once first to set up the environment.
-- **`make test`** — runs pytest inside a `linux/amd64` Docker container. Use this before merging to confirm correctness in the canonical environment.
-
-See the README for full setup instructions for both local and sandbox environments.
-
-## Sandbox Development
-
-This section is specifically for AI agents running in a LinuxKit/Docker sandbox on Apple Silicon.
-
-### Why tests need Docker in the sandbox
-
-OR-Tools wheels for `aarch64` use CPU instructions not available in LinuxKit. Running pytest directly in the sandbox crashes with `SIGILL`. Do not attempt to work around this — use Docker.
-
-### Running tests in the sandbox
-
-Before the first run, ensure `pypi.org:443` is allowed through the sandbox firewall. Then:
+OR-Tools crashes with `SIGILL` when run natively in this sandbox (aarch64/LinuxKit CPU instruction incompatibility). **Do not run pytest directly.** Always use Docker:
 
 ```bash
-# Copy the proxy CA cert to the project root (required once per sandbox session)
+# Required once per sandbox session — copy the proxy CA cert to the project root
 cp /usr/local/share/ca-certificates/proxy-ca.crt /Users/josh/Code/cfb-bot/proxy-ca.crt
 
-# Run tests
+# Run the full test suite
 make test PROXY=http://host.docker.internal:3128
 ```
 
-Subsequent runs in the same session will use the Docker layer cache — only the first run (or after requirements change) is slow.
-
-**`make test-local` does not work in the sandbox.** Do not use it.
-
-### What `make test` does
-
-It builds a `linux/amd64` Docker image, installs dependencies via pip through the sandbox proxy, and runs pytest inside the container. All 108+ tests should pass.
+`pypi.org:443` must be allowed through the sandbox firewall before the first run. Subsequent runs use the Docker layer cache and are fast. All tests should pass.
 
 ## Per-Dynasty Configurability
 

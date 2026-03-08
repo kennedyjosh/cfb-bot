@@ -13,7 +13,13 @@ else
 PROXY_ARGS :=
 endif
 
-.PHONY: test build-test test-local venv run
+.PHONY: test build-test test-local venv run install-hooks
+
+# Install git hooks from hooks/ into .git/hooks/.
+install-hooks:
+	cp hooks/pre-commit .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
+	@echo "Hooks installed."
 
 build-test:
 	docker build --platform linux/amd64 \

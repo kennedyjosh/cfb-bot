@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-commit hook: require CHANGELOG.md to be staged with every commit.
+# Install with: make install-hooks
+#
+# To skip for genuine tooling-only commits (Makefile, hooks, CI config, etc.):
+#   SKIP_CHANGELOG=1 git commit -m "..."
+
+if [ "${SKIP_CHANGELOG:-0}" = "1" ]; then
+    exit 0
+fi
+
+if ! git diff --cached --name-only | grep -q 'CHANGELOG.md'; then
+    echo "CHANGELOG REQUIRED: CHANGELOG.md is not staged."
+    echo "Run /update-changelog, then git add CHANGELOG.md, before committing."
+    echo "For tooling-only commits with no user-facing change, use: SKIP_CHANGELOG=1 git commit"
+    exit 1
+fi

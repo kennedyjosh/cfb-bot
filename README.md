@@ -66,13 +66,53 @@ All commands are admin-only in the current release.
    - Non-conference cap enforced (`12 - conference_games` per team)
 4. Results are posted publicly to the channel.
 
-## Running Tests
+## Development
 
-Tests run inside a `linux/amd64` Docker container (required for OR-Tools compatibility):
+### Running Tests
+
+There are two ways to run tests depending on your environment.
+
+#### Local machine (Mac/Linux with native OR-Tools support)
+
+On a real machine, OR-Tools works natively. Set up the local venv once, then use `make test-local` for fast feedback during development:
+
+```
+make venv        # one-time setup; re-run after requirements change
+make test-local  # runs pytest directly in .venv (~1s)
+```
+
+Use `make test` before committing to verify everything passes in the canonical `linux/amd64` container:
 
 ```
 make test
 ```
+
+#### Sandbox / AI agent environment (LinuxKit on ARM)
+
+OR-Tools crashes with `SIGILL` in LinuxKit-based sandbox environments (e.g. Claude Code sandbox on Apple Silicon) due to CPU instruction incompatibility. Tests must run inside a `linux/amd64` Docker container. The sandbox also requires a proxy to reach PyPI.
+
+The sandbox has a firewall — PyPI (`pypi.org:443`) must be explicitly allowed before running tests. Once allowed:
+
+```
+make test PROXY=http://host.docker.internal:3128
+```
+
+This passes the proxy through to `pip` inside the container. If the sandbox proxy re-encrypts HTTPS traffic (i.e. pip fails with a certificate error), copy the proxy CA cert to the project root and re-run — it will be picked up automatically:
+
+```
+cp /usr/local/share/ca-certificates/proxy-ca.crt ./proxy-ca.crt
+make test PROXY=http://host.docker.internal:3128
+```
+
+`proxy-ca.crt` is gitignored and never committed.
+
+### Make Targets
+
+| Target | Description |
+|---|---|
+| `make venv` | Create `.venv/` and install all dependencies |
+| `make test-local` | Run pytest in `.venv/` (fast; native only) |
+| `make test` | Build and run tests in a `linux/amd64` Docker container |
 
 ## Project Structure
 

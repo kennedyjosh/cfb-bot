@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-03-08
+
 ### Added
 
 - `/request remove` command: admins can now remove a specific non-conference game request by team pair

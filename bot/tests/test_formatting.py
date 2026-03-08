@@ -241,6 +241,8 @@ class TestFmtScheduleResultImbalance:
         assert "imbalance" not in text.lower()
 
     def test_imbalance_section_absent_when_diff_is_one(self):
+        # Teams always play 12 games (even), so diff=1 is impossible in practice.
+        # This test confirms the threshold is strictly >= 2.
         # Alabama: 4 conf (2H 2A) + 1 NC (1H 0A) = 3H 2A → diff=1, below threshold
         teams = {"Alabama": _human("Alabama", [1, 2, 3, 4], conf_home=2)}
         result = SolverResult(

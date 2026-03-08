@@ -49,16 +49,11 @@ The workflow is:
 - Commit after every meaningful unit of work — a passing test, a completed command, a solver extension.
 - Write clear, imperative commit messages: `Add /conf command with week and home_games parsing`, not `updates`.
 - Never commit broken code to `main` (or to any branch that will be immediately merged).
-- After every commit, the `/update-changelog` hook will fire automatically. Follow its instruction.
+- Before every commit, the `/update-changelog` hook will fire if CHANGELOG.md is not staged. Update it first, then include it in the same commit.
 
 ### Changelog
 
-`CHANGELOG.md` uses [Keep a Changelog](https://keepachangelog.com) format. It is maintained automatically via a post-commit hook that triggers `/update-changelog` after every `git commit`.
-
-**Key rules:**
-- Always write to `[Unreleased]` — never directly to a versioned section.
-- Version bumps are a separate, intentional act — not part of the commit workflow.
-- Versioning follows semantic versioning: `0.1.0` when Feature 1 ships, `0.2.0` for Feature 2, `1.0.0` when the bot is stable for real use.
+`CHANGELOG.md` is maintained via `/update-changelog`, triggered automatically before every `git commit`. See that command for format and rules.
 
 ## Testing
 

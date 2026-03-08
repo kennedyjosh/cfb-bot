@@ -25,14 +25,14 @@ test: build-test
 	docker run --rm --platform linux/amd64 cfb-bot-test
 
 # Sentinel: create/update the venv when requirements.txt changes.
-.venv/bin/python: requirements.txt
+.venv/bin/python3: requirements.txt
 	python3 -m venv .venv
 	.venv/bin/pip install --upgrade pip -q
 	.venv/bin/pip install -r requirements.txt
 
 # Run the bot. Creates/updates the venv automatically if needed.
-run: .venv/bin/python
-	.venv/bin/python main.py
+run: .venv/bin/python3
+	.venv/bin/python3 main.py
 
 # Set up the local virtual environment with all dependencies (including dev).
 venv:

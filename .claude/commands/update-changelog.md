@@ -8,19 +8,22 @@ Update CHANGELOG.md **before** committing, so the changelog entry is part of the
 
 ## Steps
 
-1. Look at what is staged: `git diff --cached --stat`
-2. Read the current CHANGELOG.md
-3. Decide: is this change user-facing? (see **Skip Conditions** below)
-4. If yes: add one or more bullets in the correct section (see **Where to Write** below)
-5. Done — do not commit here. The caller will include CHANGELOG.md in their commit.
+1. Check the current branch: `git branch --show-current`
+2. Look at what is staged: `git diff --cached --stat`
+3. Read the current CHANGELOG.md
+4. Decide: is this change user-facing? (see **Skip Conditions** below)
+5. If yes: add one or more bullets in the correct section (see **Where to Write** below)
+6. Done — do not commit here. The caller will include CHANGELOG.md in their commit.
 
 After editing, the caller should run: `git add CHANGELOG.md` before committing.
 
 ## Where to Write
 
-Write to the **`## [Unreleased]`** section for in-progress work not yet assigned a version.
+**If the current branch is `main`:** cut a release. Per project branching discipline, features are developed on branches and only land on `main` when complete — a commit to `main` is therefore a release signal. Combine the new entry with any existing `[Unreleased]` content and rename `[Unreleased]` to a versioned section (see **Choosing a Version Number** below). If there is no `[Unreleased]` section, create a versioned section directly.
 
-When releasing a version, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and create a new empty `## [Unreleased]` above it. Do not release on every commit — release when a logical milestone is complete (a full feature, a set of fixes ready to ship, etc.).
+**If the current branch is NOT `main`:** write to the `## [Unreleased]` section. The release will be cut when this branch merges to `main`.
+
+When releasing a version, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and create a new empty `## [Unreleased]` above it.
 
 ## Choosing a Version Number
 

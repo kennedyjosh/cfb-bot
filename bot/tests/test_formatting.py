@@ -231,13 +231,13 @@ class TestFmtTeams:
         text = fmt_teams(resolved=[], unrecognized=["Zeke", "Aaron"])
         assert text.index("Aaron") < text.index("Zeke")
 
-    def test_members_section_header(self):
-        text = fmt_teams(resolved=[("Alabama", 1)], unrecognized=[])
-        assert "Members:" in text
+    def test_members_section_header_with_count(self):
+        text = fmt_teams(resolved=[("Alabama", 1), ("Auburn", 2)], unrecognized=[])
+        assert "Members (2):" in text
 
-    def test_unrecognized_section_header(self):
-        text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
-        assert "Unrecognized:" in text
+    def test_unrecognized_section_header_with_count(self):
+        text = fmt_teams(resolved=[], unrecognized=["RandomGuy", "OtherGuy"])
+        assert "Unrecognized (2):" in text
 
     def test_no_jargon_in_output(self):
         text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
@@ -246,9 +246,9 @@ class TestFmtTeams:
 
     def test_both_sections_shown(self):
         text = fmt_teams(resolved=[("Alabama", 1)], unrecognized=["RandomGuy"])
-        assert "Members:" in text
+        assert "Members (1):" in text
         assert "Alabama — <@1>" in text
-        assert "Unrecognized:" in text
+        assert "Unrecognized (1):" in text
         assert "RandomGuy" in text
 
     def test_empty_both_shows_fallback(self):

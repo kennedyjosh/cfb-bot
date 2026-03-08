@@ -78,14 +78,14 @@ def fmt_teams(
     lines = []
 
     if resolved:
-        lines.append("Members:")
+        lines.append(f"Members ({len(resolved)}):")
         for team, user_id in sorted(resolved):
             lines.append(f"  {team} — <@{user_id}>")
 
     if unrecognized:
         if lines:
             lines.append("")
-        lines.append("Unrecognized:")
+        lines.append(f"Unrecognized ({len(unrecognized)}):")
         for name in sorted(unrecognized):
             lines.append(f"  {name}")
 

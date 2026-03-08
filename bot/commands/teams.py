@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
+
 import discord
 from discord import app_commands
 
 from bot.formatting import fmt_teams
+
+log = logging.getLogger(__name__)
 
 
 def register(tree: app_commands.CommandTree, bot_ref) -> None:
@@ -19,6 +23,13 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
 
         resolved = bot_ref.get_resolved_members(interaction.guild_id)
         unresolved = bot_ref.get_unresolved_members(interaction.guild_id)
+
+        log.debug(
+            "Guild %d: /teams — %d resolved, %d unrecognized",
+            interaction.guild_id,
+            len(resolved),
+            len(unresolved),
+        )
 
         resolved_pairs = [(m.team, m.user_id) for m in resolved]
         unrecognized = [m.display_name for m in unresolved]

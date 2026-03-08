@@ -40,8 +40,10 @@ Do not let Discord concerns bleed into the solver, and do not put scheduling log
 The workflow is:
 1. Create a branch: `git checkout -b feature/<short-name>`
 2. Commit freely on the branch — small, frequent commits are encouraged
-3. When the feature is complete and all tests pass, merge into `main`
+3. When the feature is complete and all tests pass, squash the branch into a single commit and merge that into `main`: `git merge --squash feature/<short-name> && git commit`
 4. Delete the feature branch after merging
+
+**No merge commits.** `main` must have a clean, linear history. Never use `git merge --no-ff` or leave merge commits in the log.
 
 `main` must always be in a working, releasable state. If you are ever committing directly to `main`, stop and ask whether you should be on a branch.
 

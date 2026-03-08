@@ -12,6 +12,7 @@ from discord import app_commands
 
 from bot.commands import conf, request, schedule, teams
 from bot.config import load_guild_config, load_valid_teams
+from bot.log import ColoredFormatter
 from bot.formatting import ADMIN_WARNING, NO_PERMISSION
 from bot.parsing import parse_display_name
 from bot.state import GuildState
@@ -164,7 +165,9 @@ class CFBBot(discord.Client):
 
 
 def run() -> None:
-    logging.basicConfig(level=logging.INFO)
+    handler = logging.StreamHandler()
+    handler.setFormatter(ColoredFormatter())
+    logging.basicConfig(level=logging.INFO, handlers=[handler])
     token = os.environ.get("DISCORD_TOKEN")
     if not token:
         raise RuntimeError("DISCORD_TOKEN environment variable is not set.")

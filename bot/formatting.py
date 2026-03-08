@@ -87,7 +87,7 @@ def fmt_teams(
             lines.append("")
         lines.append(f"Unrecognized ({len(unrecognized)}):")
         for name, user_id in sorted(unrecognized):
-            lines.append(f"  {name} — <@{user_id}>")
+            lines.append(f"  <@{user_id}>")
 
     if not lines:
         lines.append("No members found.")

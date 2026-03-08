@@ -223,9 +223,14 @@ class TestFmtTeams:
         text = fmt_teams(resolved=[], unrecognized=[("RandomGuy", 999)])
         assert "<@999>" in text
 
+    def test_unrecognized_no_display_name_prefix(self):
+        text = fmt_teams(resolved=[], unrecognized=[("RandomGuy", 999)])
+        assert "RandomGuy" not in text
+
     def test_unrecognized_sorted_alphabetically(self):
+        # Aaron sorts before Zeke, so <@2> (Aaron) should appear before <@1> (Zeke)
         text = fmt_teams(resolved=[], unrecognized=[("Zeke", 1), ("Aaron", 2)])
-        assert text.index("Aaron") < text.index("Zeke")
+        assert text.index("<@2>") < text.index("<@1>")
 
     def test_resolved_sorted_alphabetically(self):
         text = fmt_teams(resolved=[("Georgia", 3), ("Alabama", 1), ("Auburn", 2)], unrecognized=[])

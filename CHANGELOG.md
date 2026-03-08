@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-08
+
+### Changed
+
+- `/schedule show` now displays the full team schedule: conference weeks, non-conference games (with home/away notation), and bye weeks; conference schedule is visible immediately after entry, without requiring `/schedule create` to have been run first
+
 ## [0.5.7] - 2026-03-08
 
 ### Changed

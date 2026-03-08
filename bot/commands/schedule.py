@@ -154,29 +154,26 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
 
         state = bot_ref.get_guild_state(interaction.guild_id)
 
+        conference_weeks = state.conference_schedules.get(team)
+
         if state.last_result is None:
-            log.warning(
-                "Guild %d: /schedule show rejected — no schedule generated yet (user=%s)",
-                interaction.guild_id, interaction.user,
+            assignments = None
+            log.debug(
+                "Guild %d: /schedule show — %s (no NC schedule yet, user=%s)",
+                interaction.guild_id, team, interaction.user,
             )
-            await interaction.response.send_message(
-                "No schedule has been generated yet. Run /schedule create first.",
-                ephemeral=True,
+        else:
+            assignments = [
+                a
+                for a in state.last_result.assignments
+                if a.request.team_a == team or a.request.team_b == team
+            ]
+            log.debug(
+                "Guild %d: /schedule show — %s has %d NC game(s) (user=%s)",
+                interaction.guild_id, team, len(assignments), interaction.user,
             )
-            return
 
-        team_assignments = [
-            a
-            for a in state.last_result.assignments
-            if a.request.team_a == team or a.request.team_b == team
-        ]
-
-        log.debug(
-            "Guild %d: /schedule show — %s has %d NC game(s)",
-            interaction.guild_id, team, len(team_assignments),
-        )
-
-        msg = fmt_schedule_show(team, team_assignments)
+        msg = fmt_schedule_show(team, conference_weeks, assignments)
         if bot_ref.admin_warning(interaction.guild_id):
             msg = bot_ref.admin_warning(interaction.guild_id) + "\n\n" + msg
 

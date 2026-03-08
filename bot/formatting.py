@@ -123,22 +123,52 @@ def fmt_schedule_result(result: SolverResult, teams: dict[str, Team]) -> str:
     return "\n".join(lines)
 
 
-def fmt_schedule_show(team: str, assignments: list[Assignment]) -> str:
-    """Format the per-team schedule for /schedule show."""
-    if not assignments:
-        return f"{team} has no non-conference games scheduled."
+def fmt_schedule_show(
+    team: str,
+    conference_weeks: list[int] | None,
+    assignments: list[Assignment] | None,
+) -> str:
+    """Format the per-team schedule for /schedule show.
 
-    sorted_assignments = sorted(assignments, key=lambda a: a.week)
-    lines = [f"Non-conference schedule for {team}:"]
-    for a in sorted_assignments:
-        opponent = a.request.team_b if a.request.team_a == team else a.request.team_a
-        if a.home_team == team:
-            lines.append(f"  Week {a.week}: vs. {opponent}")
-        elif a.home_team == opponent:
-            lines.append(f"  Week {a.week}: at {opponent}")
-        else:
-            # home_team not set — fall back to neutral display
-            lines.append(f"  Week {a.week}: vs. {opponent}")
+    conference_weeks: list of conference game weeks, or None if not entered.
+    assignments: list of NC game assignments, or None if /schedule create not yet run.
+    """
+    lines = [f"Schedule for {team}:"]
+
+    # Conference section
+    if conference_weeks:
+        n = len(conference_weeks)
+        weeks_str = " ".join(str(w) for w in sorted(conference_weeks))
+        lines.append(f"  Conference ({n} game{'s' if n != 1 else ''}): Weeks {weeks_str}")
+    else:
+        lines.append("  Conference: none entered")
+
+    # Non-conference section
+    if assignments is None:
+        lines.append(
+            "  Non-conference: not yet scheduled — run /schedule create first."
+        )
+    elif not assignments:
+        lines.append("  Non-conference: none scheduled.")
+    else:
+        n = len(assignments)
+        lines.append(f"  Non-conference ({n} game{'s' if n != 1 else ''}):")
+        for a in sorted(assignments, key=lambda a: a.week):
+            opponent = a.request.team_b if a.request.team_a == team else a.request.team_a
+            if a.home_team == team:
+                lines.append(f"    Week {a.week}: vs. {opponent}")
+            elif a.home_team == opponent:
+                lines.append(f"    Week {a.week}: at {opponent}")
+            else:
+                lines.append(f"    Week {a.week}: vs. {opponent}")
+
+    # Bye weeks — only when NC schedule is known
+    if assignments is not None:
+        conf_set = frozenset(conference_weeks or [])
+        nc_set = frozenset(a.week for a in assignments)
+        bye_weeks = [w for w in range(1, 15) if w not in conf_set and w not in nc_set]
+        if bye_weeks:
+            lines.append(f"  Bye weeks: {' '.join(str(w) for w in bye_weeks)}")
 
     return "\n".join(lines)
 

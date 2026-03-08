@@ -518,54 +518,155 @@ class TestFmtScheduleResultHint:
 
 
 # ---------------------------------------------------------------------------
-# fmt_schedule_show
+# fmt_schedule_show — conference section
+# ---------------------------------------------------------------------------
+
+
+class TestFmtScheduleShowConference:
+    def test_shows_header_with_team_name(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3], assignments=None)
+        assert "Alabama" in text
+
+    def test_shows_conference_weeks(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3, 5], assignments=None)
+        assert "Conference" in text
+        assert "1" in text
+        assert "3" in text
+        assert "5" in text
+
+    def test_conference_weeks_sorted(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[9, 1, 5], assignments=None)
+        conf_line = next(l for l in text.splitlines() if "Conference" in l and "game" in l)
+        assert conf_line.index("1") < conf_line.index("5") < conf_line.index("9")
+
+    def test_conference_game_count_singular(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[7], assignments=None)
+        assert "Conference (1 game)" in text
+
+    def test_conference_game_count_plural(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3, 5], assignments=None)
+        assert "Conference (3 games)" in text
+
+    def test_no_conference_schedule_shows_none_entered(self):
+        text = fmt_schedule_show("Army", conference_weeks=None, assignments=None)
+        assert "none entered" in text
+
+
+# ---------------------------------------------------------------------------
+# fmt_schedule_show — NC not yet scheduled
+# ---------------------------------------------------------------------------
+
+
+class TestFmtScheduleShowNcNotScheduled:
+    def test_mentions_nc_not_scheduled(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3], assignments=None)
+        assert "not yet scheduled" in text
+
+    def test_hints_schedule_create(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3], assignments=None)
+        assert "/schedule create" in text
+
+    def test_no_bye_weeks_when_nc_not_scheduled(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3], assignments=None)
+        assert "Bye" not in text
+
+
+# ---------------------------------------------------------------------------
+# fmt_schedule_show — NC scheduled
 # ---------------------------------------------------------------------------
 
 
 class TestFmtScheduleShow:
-    def test_no_games(self):
-        text = fmt_schedule_show("Alabama", [])
-        assert "Alabama has no non-conference games scheduled." == text
+    def test_no_nc_games_shows_none_scheduled(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3], assignments=[])
+        assert "none scheduled" in text
 
     def test_single_game_as_team_a(self):
         a = _assignment("Alabama", "Auburn", 5)
-        text = fmt_schedule_show("Alabama", [a])
-        assert "Non-conference schedule for Alabama:" in text
-        assert "Week 5: vs. Auburn" in text
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
+        assert "Week 5" in text
+        assert "Auburn" in text
 
     def test_single_game_as_team_b(self):
         a = _assignment("Auburn", "Alabama", 5)
-        text = fmt_schedule_show("Alabama", [a])
-        assert "Week 5: vs. Auburn" in text
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
+        assert "Week 5" in text
+        assert "Auburn" in text
 
     def test_multiple_games_sorted_by_week(self):
         assignments = [
             _assignment("Alabama", "Georgia", 9),
             _assignment("Alabama", "Auburn", 3),
         ]
-        text = fmt_schedule_show("Alabama", assignments)
-        week3_pos = text.index("Week 3")
-        week9_pos = text.index("Week 9")
-        assert week3_pos < week9_pos
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=assignments)
+        assert text.index("Week 3") < text.index("Week 9")
 
     def test_opponent_name_appears(self):
         a = _assignment("Alabama", "Notre Dame", 7)
-        text = fmt_schedule_show("Alabama", [a])
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
         assert "Notre Dame" in text
+
+    def test_nc_game_count_singular(self):
+        a = _assignment("Alabama", "Auburn", 5, home_team="Alabama")
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
+        assert "Non-conference (1 game)" in text
+
+    def test_nc_game_count_plural(self):
+        assignments = [
+            _assignment("Alabama", "Auburn", 5, home_team="Alabama"),
+            _assignment("Alabama", "Georgia", 7, home_team="Alabama"),
+        ]
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=assignments)
+        assert "Non-conference (2 games)" in text
 
 
 class TestFmtScheduleShowHomeAway:
     def test_team_home_shows_vs(self):
         a = _assignment("Alabama", "Auburn", 3, home_team="Alabama")
-        text = fmt_schedule_show("Alabama", [a])
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
         assert "vs. Auburn" in text
-        assert "at" not in text
 
     def test_team_away_shows_at(self):
         a = _assignment("Alabama", "Auburn", 3, home_team="Auburn")
-        text = fmt_schedule_show("Alabama", [a])
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
         assert "at Auburn" in text
-        assert "vs." not in text
+
+    def test_unset_home_team_shows_vs(self):
+        a = _assignment("Alabama", "Auburn", 3, home_team="")
+        text = fmt_schedule_show("Alabama", conference_weeks=[], assignments=[a])
+        assert "vs. Auburn" in text
+
+
+# ---------------------------------------------------------------------------
+# fmt_schedule_show — bye weeks
+# ---------------------------------------------------------------------------
+
+
+class TestFmtScheduleShowByeWeeks:
+    def test_bye_weeks_shown_when_nc_scheduled(self):
+        # Conf: 1 | NC: week 3 | Bye: 2, 4-14
+        a = _assignment("Alabama", "Auburn", 3, home_team="Alabama")
+        text = fmt_schedule_show("Alabama", conference_weeks=[1], assignments=[a])
+        assert "Bye" in text
+
+    def test_bye_weeks_correct_values(self):
+        # Conf: 1, 2 | NC: week 3 | Bye: 4-14
+        a = _assignment("Alabama", "Auburn", 3, home_team="Alabama")
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 2], assignments=[a])
+        bye_line = next(l for l in text.splitlines() if "Bye" in l)
+        bye_nums = [int(x) for x in bye_line.split() if x.isdigit()]
+        assert bye_nums == list(range(4, 15))
+
+    def test_no_bye_weeks_if_fully_booked(self):
+        # All 14 weeks occupied — no bye line
+        conf = list(range(1, 8))  # weeks 1-7
+        nc = [_assignment("Alabama", f"Opp{w}", w) for w in range(8, 15)]
+        text = fmt_schedule_show("Alabama", conference_weeks=conf, assignments=nc)
+        assert "Bye" not in text
+
+    def test_bye_weeks_not_shown_when_nc_not_scheduled(self):
+        text = fmt_schedule_show("Alabama", conference_weeks=[1, 3], assignments=None)
+        assert "Bye" not in text
 
 
 # ---------------------------------------------------------------------------

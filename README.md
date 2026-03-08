@@ -82,7 +82,7 @@ Home/away assignment is optimized separately to minimize per-team imbalance acro
 ```
 /schedule show <team>
 ```
-Show one team's non-conference schedule (e.g. `vs. Auburn` or `at Auburn`). Requires `/schedule create` to have been run first.
+Show one team's full schedule: conference weeks, non-conference games (with home/away notation), and bye weeks. Conference schedule is shown immediately after `/conference_schedule` is entered; non-conference games and bye weeks appear once `/schedule create` has been run.
 
 ```
 /teams

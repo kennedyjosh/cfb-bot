@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Log output now includes timestamps and colors ERROR (red) and WARNING (yellow) lines for easier reading
 - Set the `LOG_LEVEL` environment variable to control verbosity (e.g. `LOG_LEVEL=DEBUG` to see each member resolved or ignored during startup)
+- DEBUG log lines are dimmed so they fade into the background relative to INFO/WARNING/ERROR
 
 ### Fixed
 

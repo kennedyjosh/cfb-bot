@@ -12,6 +12,7 @@ def parse_log_level(level_str: str) -> int:
 
 _RESET = "\x1b[0m"
 _LEVEL_COLORS = {
+    logging.DEBUG: "\x1b[2m",     # dim
     logging.ERROR: "\x1b[31m",    # red
     logging.WARNING: "\x1b[33m",  # yellow
 }

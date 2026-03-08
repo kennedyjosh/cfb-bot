@@ -42,13 +42,17 @@ class TestColoredFormatter:
         output = self.fmt.format(make_record(logging.WARNING))
         assert "\x1b[33m" in output, f"Expected yellow ANSI in WARNING output: {output!r}"
 
+    def test_debug_is_dim(self):
+        output = self.fmt.format(make_record(logging.DEBUG))
+        assert "\x1b[2m" in output, f"Expected dim ANSI in DEBUG output: {output!r}"
+
     def test_info_has_no_color(self):
         output = self.fmt.format(make_record(logging.INFO))
         assert not ANSI_ESCAPE.search(output), f"Unexpected ANSI codes in INFO output: {output!r}"
 
     def test_color_is_reset_after_level(self):
         # Any colored record must end with a reset so the terminal isn't left colored
-        for level in (logging.ERROR, logging.WARNING):
+        for level in (logging.DEBUG, logging.ERROR, logging.WARNING):
             output = self.fmt.format(make_record(level))
             assert output.endswith("\x1b[0m"), f"No reset at end of level {level} output: {output!r}"
 

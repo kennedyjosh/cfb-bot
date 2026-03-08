@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+.git/
+.claude/
+proxy-ca.crt
+config/*.toml
+!config/default.toml
+!config/nicknames.toml

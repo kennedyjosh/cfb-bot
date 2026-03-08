@@ -21,4 +21,8 @@ build-test:
 		-f Dockerfile.test -t cfb-bot-test .
 
 test: build-test
-	docker run --rm cfb-bot-test
+	docker run --rm --platform linux/amd64 cfb-bot-test
+
+# Run tests directly in the local venv (faster feedback; requires OR-Tools to work natively).
+test-local:
+	.venv/bin/pytest --tb=short -q

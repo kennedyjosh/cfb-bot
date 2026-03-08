@@ -13,16 +13,24 @@ else
 PROXY_ARGS :=
 endif
 
-.PHONY: test build-test
+.PHONY: test build-test test-local venv
 
 build-test:
 	docker build --platform linux/amd64 \
 		$(PROXY_ARGS) \
 		-f Dockerfile.test -t cfb-bot-test .
 
+# Run tests inside a linux/amd64 Docker container (matches production).
 test: build-test
 	docker run --rm --platform linux/amd64 cfb-bot-test
 
-# Run tests directly in the local venv (faster feedback; requires OR-Tools to work natively).
+# Set up the local virtual environment with all dependencies.
+venv:
+	python3 -m venv .venv
+	.venv/bin/pip install --upgrade pip -q
+	.venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+
+# Run tests in the local venv (fast feedback; requires OR-Tools to work natively).
+# Run `make venv` first if the venv doesn't exist yet.
 test-local:
 	.venv/bin/pytest --tb=short -q

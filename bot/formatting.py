@@ -1,6 +1,6 @@
 """Pure formatting functions for bot command responses. No Discord dependency."""
 
-from solver.model import Assignment, Request, SolverResult
+from solver.model import Assignment, Request, SolverResult, Team
 
 
 def fmt_cpu_team_rejected(team: str) -> str:
@@ -28,34 +28,97 @@ def fmt_request_removed(team1: str, team2: str) -> str:
     return f"Request removed: {team1} vs. {team2}."
 
 
-def fmt_schedule_result(result: SolverResult) -> str:
-    """Format the full schedule result for /schedule."""
+def _unscheduled_reason(
+    req: Request,
+    teams: dict[str, Team],
+    assignments: list[Assignment],
+) -> str:
+    """Infer why a request could not be scheduled (best-effort heuristic)."""
+    valid_weeks = set(range(1, 15))
+    team_a = teams.get(req.team_a)
+    team_b = teams.get(req.team_b)
+    blocked_a = team_a.conference_weeks if team_a else frozenset()
+    blocked_b = team_b.conference_weeks if team_b else frozenset()
+    if not (valid_weeks - blocked_a - blocked_b):
+        return "no common open week"
+    for name, team in [(req.team_a, team_a), (req.team_b, team_b)]:
+        if team and not team.is_cpu:
+            assigned_count = sum(
+                1 for a in assignments
+                if a.request.team_a == name or a.request.team_b == name
+            )
+            if assigned_count >= team.nc_cap:
+                return f"{name}'s schedule is full"
+    return "scheduling conflict"
+
+
+def _home_away_counts(
+    team_name: str,
+    team: Team,
+    assignments: list[Assignment],
+) -> tuple[int, int]:
+    """Return (total_home, total_away) across conference and NC games."""
+    nc_games = [
+        a for a in assignments
+        if a.request.team_a == team_name or a.request.team_b == team_name
+    ]
+    nc_home = sum(1 for a in nc_games if a.home_team == team_name)
+    nc_away = len(nc_games) - nc_home
+    conf_away = len(team.conference_weeks) - team.conference_home_games
+    return team.conference_home_games + nc_home, conf_away + nc_away
+
+
+def fmt_schedule_result(result: SolverResult, teams: dict[str, Team]) -> str:
+    """Format the full schedule result for /schedule create."""
     total = len(result.assignments) + len(result.unscheduled)
     fulfilled = len(result.assignments)
+    lines = [f"Schedule Results \u2014 {fulfilled} of {total} requests fulfilled"]
 
-    lines = [f"Schedule Results \u2014 {fulfilled} of {total} requests fulfilled", ""]
-
-    lines.append("Fulfilled:")
-    if not result.assignments:
-        lines.append("  (none)")
-    else:
-        sorted_assignments = sorted(
-            result.assignments,
-            key=lambda a: (a.week, a.request.team_a),
-        )
-        for a in sorted_assignments:
-            if a.home_team and a.home_team == a.request.team_b:
-                # team_b is home: show "team_a at team_b"
-                lines.append(f"  Week {a.week}: {a.request.team_a} at {a.request.team_b}")
-            else:
-                # team_a is home (or home_team not set): show "team_a vs. team_b"
-                lines.append(f"  Week {a.week}: {a.request.team_a} vs. {a.request.team_b}")
-
+    # Not-scheduled section (with reasons)
     if result.unscheduled:
         lines.append("")
-        lines.append("Not scheduled:")
-        for r in result.unscheduled:
-            lines.append(f"  {r.team_a} vs. {r.team_b}")
+        lines.append(f"Not scheduled ({len(result.unscheduled)}):")
+        for req in result.unscheduled:
+            reason = _unscheduled_reason(req, teams, result.assignments)
+            lines.append(f"  {req.team_a} vs. {req.team_b} \u2014 {reason}")
+
+    # Home/away imbalance section
+    imbalanced = []
+    for team_name, team in sorted(teams.items()):
+        home, away = _home_away_counts(team_name, team, result.assignments)
+        diff = home - away
+        if abs(diff) >= 2:
+            direction = "home" if diff > 0 else "away"
+            imbalanced.append(f"  {team_name}: {home}H {away}A (+{abs(diff)} {direction})")
+    if imbalanced:
+        lines.append("")
+        lines.append("Home/away imbalance:")
+        lines.extend(imbalanced)
+
+    # Per-team schedule
+    if result.assignments:
+        team_games: dict[str, list[Assignment]] = {}
+        for a in result.assignments:
+            team_games.setdefault(a.request.team_a, []).append(a)
+            team_games.setdefault(a.request.team_b, []).append(a)
+
+        lines.append("")
+        lines.append("Non-conference schedule:")
+        for team_name in sorted(team_games):
+            games = sorted(team_games[team_name], key=lambda a: a.week)
+            n = len(games)
+            lines.append(f"\n{team_name} ({n} game{'s' if n != 1 else ''}):")
+            for a in games:
+                opponent = a.request.team_b if a.request.team_a == team_name else a.request.team_a
+                if a.home_team == team_name:
+                    lines.append(f"  Week {a.week}: vs. {opponent}")
+                elif a.home_team == opponent:
+                    lines.append(f"  Week {a.week}: at {opponent}")
+                else:
+                    lines.append(f"  Week {a.week}: vs. {opponent}")
+
+        lines.append("")
+        lines.append("Use /schedule show <team> to view a single team's schedule.")
 
     return "\n".join(lines)
 

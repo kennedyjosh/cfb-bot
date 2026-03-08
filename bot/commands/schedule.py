@@ -121,7 +121,7 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         for r in result.unscheduled:
             log.debug("  unscheduled: %s vs. %s", r.team_a, r.team_b)
 
-        msg = fmt_schedule_result(result)
+        msg = fmt_schedule_result(result, teams)
         if bot_ref.admin_warning(interaction.guild_id):
             msg = bot_ref.admin_warning(interaction.guild_id) + "\n\n" + msg
 

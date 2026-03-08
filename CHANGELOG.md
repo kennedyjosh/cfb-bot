@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `/schedule create` output redesigned: schedule now listed by team (each team appears once per game), unscheduled games with inferred reasons shown at top, home/away imbalance warnings shown for any team with a skew of 2+ games, hint to use `/schedule show` added at the end
 - `/schedule create` now logs debug detail: human team nc_caps and conf weeks, auto-registered CPU teams, solver wall-clock time, each fulfilled assignment, and each unscheduled request
 
 ### Fixed

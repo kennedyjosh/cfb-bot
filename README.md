@@ -11,34 +11,22 @@ The core scheduling problem is solved with **Google OR-Tools (CP-SAT)**. The Dis
 
 ## Setup
 
-1. **Set your bot token:**
+1. **Create a per-dynasty config file** (optional but recommended):
+   ```
+   cp config/default.toml config/<your_guild_id>.toml
+   ```
+   Edit the file to set `admin.id` to your Discord user ID or a role ID. The bot will log a warning at startup for any guild that has no config file. All available config keys and their defaults are documented in `config/default.toml`.
+
+2. **Set your bot token:**
    ```
    export DISCORD_TOKEN=your_token_here
    ```
 
-2. **Run the bot:**
+3. **Run the bot:**
    ```
    make run
    ```
    This creates a virtual environment and installs dependencies automatically on first run.
-
-3. **Create a per-dynasty config file** (optional but recommended):
-   ```
-   cp config/default.toml config/<your_guild_id>.toml
-   ```
-   Edit the file to set `admin.id` to your Discord user ID or a role ID. The bot will log a warning at startup for any guild that has no config file.
-
-## Configuration
-
-Config is stored in `config/<guild_id>.toml` (one file per Dynasty server). All keys have sensible defaults defined in `config/default.toml`.
-
-| Key | Default | Description |
-|---|---|---|
-| `admin.id` | `""` | Discord user ID or role ID with admin privileges. If blank, all commands work but emit a warning. |
-| `members.ignore_regex` | `"inactive"` | Members whose display name matches this regex (case-insensitive) are excluded from team scraping. |
-| `members.name_regex` | `"^(?P<team>.+)$"` | Regex to extract a team name from a Discord display name. Must contain a `team` named capture group. |
-
-Team name abbreviations (e.g. "App State" → "Appalachian State") are configured globally in `config/nicknames.toml`.
 
 ## Commands
 

@@ -5,7 +5,6 @@ from pathlib import Path
 
 _CONFIG_DIR = Path(__file__).parent.parent / "config"
 _DEFAULT_TOML = _CONFIG_DIR / "default.toml"
-_NICKNAMES_TOML = _CONFIG_DIR / "nicknames.toml"
 _TEAMS_TXT = Path(__file__).parent.parent / "teams.txt"
 
 
@@ -32,15 +31,6 @@ def _deep_merge(base: dict, overrides: dict) -> None:
             _deep_merge(base[key], value)
         else:
             base[key] = value
-
-
-def load_nicknames() -> dict[str, str]:
-    """Load the global nicknames mapping (abbreviation → canonical name)."""
-    if not _NICKNAMES_TOML.exists():
-        return {}
-    with open(_NICKNAMES_TOML, "rb") as f:
-        data = tomllib.load(f)
-    return data.get("nicknames", {})
 
 
 def load_valid_teams() -> set[str]:

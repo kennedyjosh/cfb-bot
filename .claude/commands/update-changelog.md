@@ -46,8 +46,8 @@ Pick the version based on what's in `[Unreleased]` relative to the last release:
 | What's in [Unreleased] | Bump |
 |---|---|
 | Any breaking changes (renamed/removed commands, changed behavior) | MAJOR (`X+1.0.0`) |
-| New features, new commands, new config keys (no breaking changes) | MINOR (`X.Y+1.0`) |
-| Bug fixes only | PATCH (`X.Y.Z+1`) |
+| New bot commands, new user-facing config keys, new scheduling behavior | MINOR (`X.Y+1.0`) |
+| Bug fixes, operational improvements (logging, tooling, startup warnings, make targets) | PATCH (`X.Y.Z+1`) |
 
 Rules:
 - Any breaking change → MAJOR (even if fixes are also present)

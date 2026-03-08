@@ -27,6 +27,7 @@ Keep the codebase cleanly separated into three layers:
 - **`solver/`** — pure Python, no Discord dependency. Takes a data model in, returns a solution out. Must be independently testable.
 - **`bot/`** — Discord bot, slash commands, input parsing, output formatting. Calls into the solver layer.
 - **`db/`** — SQLite data access. Schema migrations, reads, writes. No business logic here.
+- **`main.py`** — entry point. Reads `DISCORD_TOKEN` from the environment and starts the bot.
 
 Do not let Discord concerns bleed into the solver, and do not put scheduling logic in the bot layer.
 
@@ -51,10 +52,6 @@ The workflow is:
 - Never commit broken code to `main` (or to any branch that will be immediately merged).
 - Before every commit, the `/update-changelog` hook will fire if CHANGELOG.md is not staged. Update it first, then include it in the same commit.
 
-### Changelog
-
-`CHANGELOG.md` is maintained via `/update-changelog`, triggered automatically before every `git commit`. See that command for format and rules.
-
 ## Running Tests
 
 OR-Tools crashes with `SIGILL` when run natively in this sandbox (aarch64/LinuxKit CPU instruction incompatibility). **Do not run pytest directly.** Always use Docker:
@@ -67,7 +64,13 @@ cp /usr/local/share/ca-certificates/proxy-ca.crt /Users/josh/Code/cfb-bot/proxy-
 make test PROXY=http://host.docker.internal:3128
 ```
 
-`pypi.org:443` must be allowed through the sandbox firewall before the first run. Subsequent runs use the Docker layer cache and are fast. All tests should pass.
+`pypi.org:443` must be allowed through the sandbox firewall before the first run. Subsequent runs use the Docker layer cache and are fast. All tests should pass. If they don't, investigate before proceeding — do not skip or work around failures.
+
+## Testing Philosophy — THIS IS NON-NEGOTIABLE
+
+**Test all three layers. For the solver and db layers, test thoroughly. For the bot layer, keep command handlers thin — extract all non-trivial logic (argument parsing, input validation, response formatting) into pure functions with no Discord dependency, and test those functions directly. The only acceptable untested surface area is the Discord framework wiring itself. See `adr/004-testing-strategy.md` for the full strategy.**
+
+Always run the full test suite (via `make test`) before merging any branch. If a test is failing and the fix is non-trivial, commit a `FIXME` note and open a follow-up — but do not let a failing test become an excuse to skip the suite, and do not merge with failing tests.
 
 ## Per-Dynasty Configurability
 
@@ -87,6 +90,6 @@ Decisions made during planning that should not be revisited without good reason.
 Additional constraints:
 
 - **One dynasty per Discord server.** Guild ID is the dynasty key. No multi-dynasty-per-server complexity.
-- **Admin-only for data entry and solver execution.** Users get read access and request submission in Feature 4, not before.
+- **Admin-only for data entry and solver execution.** Non-admin access is not yet implemented.
 - **Conference schedule input is weeks + home game count only.** The specific home/away assignment per week is not tracked — only the total count matters for balance.
 - **CPU teams are always available**, provided they are not already scheduled against another user that week. No conference schedule is needed or accepted for CPU teams.

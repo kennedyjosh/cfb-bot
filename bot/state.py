@@ -10,16 +10,18 @@ class GuildState:
     """All mutable scheduling state for one Discord guild."""
 
     conference_schedules: dict[str, set[int]] = field(default_factory=dict)
+    conference_home_games: dict[str, int] = field(default_factory=dict)
     requests: list[Request] = field(default_factory=list)
     last_result: SolverResult | None = None
 
-    def set_conference_schedule(self, team: str, weeks: list[int]) -> bool:
-        """Store or replace a team's conference week set.
+    def set_conference_schedule(self, team: str, weeks: list[int], home_games: int) -> bool:
+        """Store or replace a team's conference schedule.
 
         Returns True if a prior entry was replaced, False if this is a new entry.
         """
         existed = team in self.conference_schedules
         self.conference_schedules[team] = set(weeks)
+        self.conference_home_games[team] = home_games
         return existed
 
     def add_request(self, team1: str, team2: str) -> Request:

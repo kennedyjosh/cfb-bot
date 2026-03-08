@@ -6,8 +6,8 @@ import discord
 from discord import app_commands
 
 from bot.formatting import fmt_schedule_result, fmt_schedule_show
-from solver.model import SolverInput, Team
-from solver.scheduler import solve
+from solver.model import SolverInput, SolverResult, Team
+from solver.scheduler import assign_home_away, solve
 
 
 def register(tree: app_commands.CommandTree, bot_ref) -> None:
@@ -50,10 +50,16 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
                 name=team_name,
                 conference_weeks=frozenset(weeks),
                 is_cpu=False,
+                conference_home_games=state.conference_home_games.get(team_name, 0),
             )
 
         solver_input = SolverInput(teams=teams, requests=state.requests)
         result = solve(solver_input)
+
+        # Assign home/away for all scheduled games
+        assigned = assign_home_away(result.assignments, teams)
+        result = SolverResult(assignments=assigned, unscheduled=result.unscheduled)
+
         state.last_result = result
 
         msg = fmt_schedule_result(result)

@@ -9,28 +9,28 @@ from solver.model import Request
 class TestSetConferenceSchedule:
     def test_new_entry_returns_false(self):
         state = GuildState()
-        assert state.set_conference_schedule("Alabama", [1, 3, 5]) is False
+        assert state.set_conference_schedule("Alabama", [1, 3, 5], home_games=0) is False
 
     def test_updated_entry_returns_true(self):
         state = GuildState()
-        state.set_conference_schedule("Alabama", [1, 3, 5])
-        assert state.set_conference_schedule("Alabama", [2, 4, 6]) is True
+        state.set_conference_schedule("Alabama", [1, 3, 5], home_games=0)
+        assert state.set_conference_schedule("Alabama", [2, 4, 6], home_games=0) is True
 
     def test_weeks_stored_correctly(self):
         state = GuildState()
-        state.set_conference_schedule("Alabama", [1, 3, 5])
+        state.set_conference_schedule("Alabama", [1, 3, 5], home_games=0)
         assert state.conference_schedules["Alabama"] == {1, 3, 5}
 
     def test_replaces_prior_entry(self):
         state = GuildState()
-        state.set_conference_schedule("Alabama", [1, 3, 5])
-        state.set_conference_schedule("Alabama", [2, 4, 6])
+        state.set_conference_schedule("Alabama", [1, 3, 5], home_games=0)
+        state.set_conference_schedule("Alabama", [2, 4, 6], home_games=0)
         assert state.conference_schedules["Alabama"] == {2, 4, 6}
 
     def test_multiple_teams_stored_independently(self):
         state = GuildState()
-        state.set_conference_schedule("Alabama", [1, 3])
-        state.set_conference_schedule("Auburn", [5, 7])
+        state.set_conference_schedule("Alabama", [1, 3], home_games=0)
+        state.set_conference_schedule("Auburn", [5, 7], home_games=0)
         assert state.conference_schedules["Alabama"] == {1, 3}
         assert state.conference_schedules["Auburn"] == {5, 7}
 
@@ -87,14 +87,14 @@ class TestTeamsMissingConfSchedule:
     def test_all_schedules_present_returns_empty(self):
         state = GuildState()
         state.add_request("Alabama", "Auburn")
-        state.set_conference_schedule("Alabama", [1])
-        state.set_conference_schedule("Auburn", [2])
+        state.set_conference_schedule("Alabama", [1], home_games=0)
+        state.set_conference_schedule("Auburn", [2], home_games=0)
         assert state.teams_missing_conf_schedule({"Alabama", "Auburn"}) == []
 
     def test_missing_team_returned(self):
         state = GuildState()
         state.add_request("Alabama", "Auburn")
-        state.set_conference_schedule("Auburn", [2])
+        state.set_conference_schedule("Auburn", [2], home_games=0)
         missing = state.teams_missing_conf_schedule({"Alabama", "Auburn"})
         assert missing == ["Alabama"]
 
@@ -102,7 +102,7 @@ class TestTeamsMissingConfSchedule:
         # Army is not in human_teams, so it should be treated as CPU and excluded
         state = GuildState()
         state.add_request("Alabama", "Army")
-        state.set_conference_schedule("Alabama", [1])
+        state.set_conference_schedule("Alabama", [1], home_games=0)
         missing = state.teams_missing_conf_schedule({"Alabama"})
         assert missing == []
 
@@ -114,3 +114,23 @@ class TestTeamsMissingConfSchedule:
             {"Alabama", "Auburn", "Georgia", "Notre Dame"}
         )
         assert missing == sorted(missing)
+
+
+class TestSetConferenceScheduleHomeGames:
+    def test_home_games_stored(self):
+        state = GuildState()
+        state.set_conference_schedule("Alabama", [1, 3, 5], home_games=3)
+        assert state.conference_home_games["Alabama"] == 3
+
+    def test_home_games_updated_on_replace(self):
+        state = GuildState()
+        state.set_conference_schedule("Alabama", [1, 3, 5], home_games=3)
+        state.set_conference_schedule("Alabama", [2, 4, 6], home_games=2)
+        assert state.conference_home_games["Alabama"] == 2
+
+    def test_home_games_stored_independently_per_team(self):
+        state = GuildState()
+        state.set_conference_schedule("Alabama", [1, 3], home_games=1)
+        state.set_conference_schedule("Auburn", [5, 7], home_games=2)
+        assert state.conference_home_games["Alabama"] == 1
+        assert state.conference_home_games["Auburn"] == 2

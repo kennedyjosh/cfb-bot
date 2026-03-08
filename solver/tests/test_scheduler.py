@@ -10,8 +10,8 @@ from solver.scheduler import solve
 # Helpers
 # ---------------------------------------------------------------------------
 
-def human(name: str, conf_weeks: list[int] = []) -> Team:
-    return Team(name=name, conference_weeks=frozenset(conf_weeks), is_cpu=False)
+def human(name: str, conf_weeks: list[int] = [], conf_home: int = 0) -> Team:
+    return Team(name=name, conference_weeks=frozenset(conf_weeks), is_cpu=False, conference_home_games=conf_home)
 
 
 def cpu(name: str) -> Team:
@@ -329,3 +329,25 @@ class TestEdgeCases:
         result = solve(SolverInput(teams=teams, requests=requests))
         total = len(result.assignments) + len(result.unscheduled)
         assert total == len(requests)
+
+
+class TestAssignmentModel:
+    def test_home_team_defaults_to_empty_string(self):
+        r = Request(team_a="Alabama", team_b="Auburn")
+        a = Assignment(request=r, week=3)
+        assert a.home_team == ""
+
+    def test_home_team_stored(self):
+        r = Request(team_a="Alabama", team_b="Auburn")
+        a = Assignment(request=r, week=3, home_team="Alabama")
+        assert a.home_team == "Alabama"
+
+
+class TestTeamModel:
+    def test_conference_home_games_defaults_to_zero(self):
+        team = Team(name="Alabama", conference_weeks=frozenset([1, 2, 3]))
+        assert team.conference_home_games == 0
+
+    def test_conference_home_games_stored(self):
+        team = Team(name="Alabama", conference_weeks=frozenset([1, 2, 3]), conference_home_games=2)
+        assert team.conference_home_games == 2

@@ -20,25 +20,31 @@ from solver.model import Assignment, Request, SolverResult
 
 class TestFmtConfScheduleSet:
     def test_new_entry(self):
-        result = fmt_conf_schedule_set("Alabama", [1, 3, 5], updated=False)
+        result = fmt_conf_schedule_set("Alabama", [1, 3, 5], home_games=0, updated=False)
         assert result.startswith("Set conference schedule for Alabama.")
         assert "weeks 1 3 5" in result
 
     def test_updated_entry(self):
-        result = fmt_conf_schedule_set("Auburn", [2, 4], updated=True)
+        result = fmt_conf_schedule_set("Auburn", [2, 4], home_games=0, updated=True)
         assert result.startswith("Updated conference schedule for Auburn.")
         assert "weeks 2 4" in result
 
     def test_weeks_are_sorted(self):
-        result = fmt_conf_schedule_set("Georgia", [9, 3, 1], updated=False)
+        result = fmt_conf_schedule_set("Georgia", [9, 3, 1], home_games=0, updated=False)
         assert "weeks 1 3 9" in result
 
+
+class TestFmtConfScheduleSetHomeGames:
+    def test_home_games_shown_in_confirmation(self):
+        result = fmt_conf_schedule_set("Alabama", [1, 3, 5], home_games=3, updated=False)
+        assert "3 home" in result
+
     def test_single_week(self):
-        result = fmt_conf_schedule_set("Army", [7], updated=False)
+        result = fmt_conf_schedule_set("Army", [7], home_games=0, updated=False)
         assert "weeks 7" in result
 
     def test_team_name_appears_in_both_lines(self):
-        result = fmt_conf_schedule_set("Notre Dame", [1, 2, 3], updated=False)
+        result = fmt_conf_schedule_set("Notre Dame", [1, 2, 3], home_games=0, updated=False)
         assert result.count("Notre Dame") == 2
 
 
@@ -71,8 +77,8 @@ def _req(a: str, b: str) -> Request:
     return Request(team_a=a, team_b=b)
 
 
-def _assignment(a: str, b: str, week: int) -> Assignment:
-    return Assignment(request=_req(a, b), week=week)
+def _assignment(a: str, b: str, week: int, home_team: str = "") -> Assignment:
+    return Assignment(request=_req(a, b), week=week, home_team=home_team)
 
 
 class TestFmtScheduleResult:
@@ -174,13 +180,13 @@ class TestFmtScheduleShow:
         a = _assignment("Alabama", "Auburn", 5)
         text = fmt_schedule_show("Alabama", [a])
         assert "Non-conference schedule for Alabama:" in text
-        assert "Week 5: Alabama vs. Auburn" in text
+        assert "Week 5: vs. Auburn" in text
 
     def test_single_game_as_team_b(self):
         # Opponent is team_a — should still show correctly
         a = _assignment("Auburn", "Alabama", 5)
         text = fmt_schedule_show("Alabama", [a])
-        assert "Week 5: Alabama vs. Auburn" in text
+        assert "Week 5: vs. Auburn" in text
 
     def test_multiple_games_sorted_by_week(self):
         assignments = [
@@ -248,3 +254,39 @@ class TestConstants:
     def test_admin_warning_mentions_config(self):
         assert "admin.id" in ADMIN_WARNING
         assert "config/" in ADMIN_WARNING
+
+
+class TestFmtScheduleResultHomeAway:
+    def test_home_team_shown_with_vs(self):
+        # Alabama is home → "Alabama vs. Auburn"
+        result = SolverResult(
+            assignments=[_assignment("Alabama", "Auburn", 3, home_team="Alabama")],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result)
+        assert "Alabama vs. Auburn" in text
+
+    def test_away_team_shown_with_at(self):
+        # Auburn is home → "Alabama at Auburn"
+        result = SolverResult(
+            assignments=[_assignment("Alabama", "Auburn", 3, home_team="Auburn")],
+            unscheduled=[],
+        )
+        text = fmt_schedule_result(result)
+        assert "Alabama at Auburn" in text
+
+
+class TestFmtScheduleShowHomeAway:
+    def test_team_home_shows_vs(self):
+        # Alabama is home → "vs. Auburn"
+        a = _assignment("Alabama", "Auburn", 3, home_team="Alabama")
+        text = fmt_schedule_show("Alabama", [a])
+        assert "vs. Auburn" in text
+        assert "at" not in text
+
+    def test_team_away_shows_at(self):
+        # Auburn is home → Alabama is at Auburn
+        a = _assignment("Alabama", "Auburn", 3, home_team="Auburn")
+        text = fmt_schedule_show("Alabama", [a])
+        assert "at Auburn" in text
+        assert "vs." not in text

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-08
+
+### Added
+
+- Home/away assignment for every scheduled non-conference game, optimized by CP-SAT to minimize per-team home/away imbalance
+
+### Changed
+
+- `/conference_schedule` now requires a `home_games` integer argument (number of home conference games among those weeks)
+- `/schedule create` and `/schedule show` output now displays `{home} vs. {away}` or `{away} at {home}` notation; per-team view shows `vs. {opponent}` or `at {opponent}`
+
 ## [0.4.0] - 2026-03-08
 
 ### Changed

@@ -17,9 +17,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
     @app_commands.describe(
         team="The team whose schedule is being entered (from the official team list).",
         weeks="Space-separated week numbers (1–14) with conference games. E.g. '1 3 5 7 9 11'.",
+        home_games="Number of home games among those conference weeks.",
     )
     async def conference_schedule(
-        interaction: discord.Interaction, team: str, weeks: str
+        interaction: discord.Interaction, team: str, weeks: str, home_games: int
     ) -> None:
         if not await bot_ref.check_admin(interaction):
             return
@@ -40,9 +41,9 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             return
 
         state = bot_ref.get_guild_state(interaction.guild_id)
-        updated = state.set_conference_schedule(team, week_list)
+        updated = state.set_conference_schedule(team, week_list, home_games=home_games)
 
-        msg = fmt_conf_schedule_set(team, week_list, updated=updated)
+        msg = fmt_conf_schedule_set(team, week_list, home_games=home_games, updated=updated)
         if bot_ref.admin_warning(interaction.guild_id):
             msg = bot_ref.admin_warning(interaction.guild_id) + "\n\n" + msg
 

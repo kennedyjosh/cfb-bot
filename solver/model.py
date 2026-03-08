@@ -8,6 +8,7 @@ class Team:
     name: str
     conference_weeks: frozenset[int] = field(default_factory=frozenset)
     is_cpu: bool = False
+    conference_home_games: int = 0
 
     @property
     def nc_cap(self) -> int:
@@ -25,6 +26,7 @@ class Request:
 class Assignment:
     request: Request
     week: int
+    home_team: str = ""
 
 
 @dataclass

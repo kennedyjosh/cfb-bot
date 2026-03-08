@@ -3,13 +3,13 @@
 from solver.model import Assignment, Request, SolverResult
 
 
-def fmt_conf_schedule_set(team: str, weeks: list[int], *, updated: bool) -> str:
+def fmt_conf_schedule_set(team: str, weeks: list[int], *, home_games: int, updated: bool) -> str:
     """Response for a successful /conference_schedule command."""
     verb = "Updated" if updated else "Set"
     weeks_str = " ".join(str(w) for w in sorted(weeks))
     return (
         f"{verb} conference schedule for {team}.\n"
-        f"{team}: conference games on weeks {weeks_str}."
+        f"{team}: conference games on weeks {weeks_str} ({home_games} home)."
     )
 
 
@@ -34,7 +34,12 @@ def fmt_schedule_result(result: SolverResult) -> str:
             key=lambda a: (a.week, a.request.team_a),
         )
         for a in sorted_assignments:
-            lines.append(f"  Week {a.week}: {a.request.team_a} vs. {a.request.team_b}")
+            if a.home_team and a.home_team == a.request.team_b:
+                # team_b is home: show "team_a at team_b"
+                lines.append(f"  Week {a.week}: {a.request.team_a} at {a.request.team_b}")
+            else:
+                # team_a is home (or home_team not set): show "team_a vs. team_b"
+                lines.append(f"  Week {a.week}: {a.request.team_a} vs. {a.request.team_b}")
 
     if result.unscheduled:
         lines.append("")
@@ -53,10 +58,14 @@ def fmt_schedule_show(team: str, assignments: list[Assignment]) -> str:
     sorted_assignments = sorted(assignments, key=lambda a: a.week)
     lines = [f"Non-conference schedule for {team}:"]
     for a in sorted_assignments:
-        opponent = (
-            a.request.team_b if a.request.team_a == team else a.request.team_a
-        )
-        lines.append(f"  Week {a.week}: {team} vs. {opponent}")
+        opponent = a.request.team_b if a.request.team_a == team else a.request.team_a
+        if a.home_team == team:
+            lines.append(f"  Week {a.week}: vs. {opponent}")
+        elif a.home_team == opponent:
+            lines.append(f"  Week {a.week}: at {opponent}")
+        else:
+            # home_team not set — fall back to neutral display
+            lines.append(f"  Week {a.week}: vs. {opponent}")
 
     return "\n".join(lines)
 

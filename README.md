@@ -56,6 +56,12 @@ CPU-controlled teams don't need a conference schedule.
 
 Add each desired non-conference matchup. Either team can be listed first. CPU teams are valid opponents. Duplicate requests are rejected.
 
+```
+/request remove <team1> <team2>
+```
+
+Remove a previously added request.
+
 ### Step 3 — Run the scheduler
 
 ```
@@ -133,6 +139,7 @@ make test PROXY=http://host.docker.internal:3128
 | `make venv` | Create `.venv/` and install all dependencies including dev |
 | `make test-local` | Run pytest in `.venv/` (fast; native only) |
 | `make test` | Build and run tests in a `linux/amd64` Docker container |
+| `make install-hooks` | Install git hooks from `hooks/` into `.git/hooks/` |
 
 ## Project Structure
 
@@ -141,6 +148,7 @@ solver/      — CP-SAT scheduling optimizer (no Discord dependency)
 bot/         — Discord bot: commands, parsing, formatting, state
 db/          — SQLite persistence (future feature)
 config/      — Default and per-dynasty configuration
+hooks/       — Git hooks (install with make install-hooks)
 spec/        — Behavior specifications
 adr/         — Architecture Decision Records
 ```

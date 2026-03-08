@@ -210,39 +210,50 @@ class TestFmtScheduleShow:
 
 
 class TestFmtTeams:
-    def test_all_mapped(self):
-        text = fmt_teams(ignored=[], unparsable=[])
-        assert text == "All members have been successfully mapped to a team."
+    def test_shows_resolved_member_with_mention(self):
+        text = fmt_teams(resolved=[("Alabama", 123)], unrecognized=[])
+        assert "Alabama" in text
+        assert "<@123>" in text
 
-    def test_ignored_only(self):
-        text = fmt_teams(ignored=["Josh (Inactive)"], unparsable=[])
-        assert "Ignored (matched ignore_regex):" in text
-        assert "Josh (Inactive)" in text
-        assert "Unparsable" not in text
+    def test_resolved_formatted_as_team_dash_mention(self):
+        text = fmt_teams(resolved=[("Alabama", 123)], unrecognized=[])
+        assert "Alabama — <@123>" in text
 
-    def test_unparsable_only(self):
-        text = fmt_teams(ignored=[], unparsable=["RandomGuy"])
-        assert "Unparsable (name not recognized):" in text
+    def test_shows_unrecognized_member(self):
+        text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
         assert "RandomGuy" in text
-        assert "Ignored" not in text
 
-    def test_both_sections(self):
-        text = fmt_teams(ignored=["Inactive1"], unparsable=["Typo Team"])
-        assert "Ignored (matched ignore_regex):" in text
-        assert "Inactive1" in text
-        assert "Unparsable (name not recognized):" in text
-        assert "Typo Team" in text
+    def test_resolved_sorted_alphabetically(self):
+        text = fmt_teams(resolved=[("Georgia", 3), ("Alabama", 1), ("Auburn", 2)], unrecognized=[])
+        assert text.index("Alabama") < text.index("Auburn") < text.index("Georgia")
 
-    def test_header_present_when_any_unresolved(self):
-        text = fmt_teams(ignored=["X"], unparsable=[])
-        assert "Members not mapped to a team:" in text
+    def test_unrecognized_sorted_alphabetically(self):
+        text = fmt_teams(resolved=[], unrecognized=["Zeke", "Aaron"])
+        assert text.index("Aaron") < text.index("Zeke")
 
-    def test_multiple_names_per_section(self):
-        text = fmt_teams(ignored=["A", "B"], unparsable=["C", "D"])
-        assert "A" in text
-        assert "B" in text
-        assert "C" in text
-        assert "D" in text
+    def test_members_section_header(self):
+        text = fmt_teams(resolved=[("Alabama", 1)], unrecognized=[])
+        assert "Members:" in text
+
+    def test_unrecognized_section_header(self):
+        text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
+        assert "Unrecognized:" in text
+
+    def test_no_jargon_in_output(self):
+        text = fmt_teams(resolved=[], unrecognized=["RandomGuy"])
+        assert "ignore_regex" not in text
+        assert "unparsable" not in text.lower()
+
+    def test_both_sections_shown(self):
+        text = fmt_teams(resolved=[("Alabama", 1)], unrecognized=["RandomGuy"])
+        assert "Members:" in text
+        assert "Alabama — <@1>" in text
+        assert "Unrecognized:" in text
+        assert "RandomGuy" in text
+
+    def test_empty_both_shows_fallback(self):
+        text = fmt_teams(resolved=[], unrecognized=[])
+        assert text  # some output, not a crash
 
 
 # ---------------------------------------------------------------------------

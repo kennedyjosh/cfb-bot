@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-03-08
+
+### Changed
+
+- `/teams` now shows all members with their resolved team (e.g. `Alabama — @Josh`), plus an "Unrecognized" section for members the bot couldn't map. Mentions are clickable but do not ping.
+
 ## [0.5.0] - 2026-03-08
 
 ### Added

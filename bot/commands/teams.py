@@ -11,18 +11,23 @@ from bot.formatting import fmt_teams
 def register(tree: app_commands.CommandTree, bot_ref) -> None:
     @tree.command(
         name="teams",
-        description="List Discord members not mapped to a team.",
+        description="List all Discord members and their team assignments.",
     )
     async def teams(interaction: discord.Interaction) -> None:
         if not await bot_ref.check_admin(interaction):
             return
 
+        resolved = bot_ref.get_resolved_members(interaction.guild_id)
         unresolved = bot_ref.get_unresolved_members(interaction.guild_id)
-        ignored = [m.display_name for m in unresolved if m.is_ignored]
-        unparsable = [m.display_name for m in unresolved if not m.is_ignored]
 
-        msg = fmt_teams(ignored=ignored, unparsable=unparsable)
+        resolved_pairs = [(m.team, m.user_id) for m in resolved]
+        unrecognized = [m.display_name for m in unresolved]
+
+        msg = fmt_teams(resolved=resolved_pairs, unrecognized=unrecognized)
         if bot_ref.admin_warning(interaction.guild_id):
             msg = bot_ref.admin_warning(interaction.guild_id) + "\n\n" + msg
 
-        await interaction.response.send_message(msg)
+        await interaction.response.send_message(
+            msg,
+            allowed_mentions=discord.AllowedMentions(users=False),
+        )

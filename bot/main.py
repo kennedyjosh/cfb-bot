@@ -21,6 +21,13 @@ log = logging.getLogger(__name__)
 
 
 @dataclass
+class ResolvedMember:
+    display_name: str
+    team: str
+    user_id: int
+
+
+@dataclass
 class UnresolvedMember:
     display_name: str
     is_ignored: bool  # True = matched ignore_regex; False = unparsable
@@ -39,6 +46,7 @@ class CFBBot(discord.Client):
         self._guild_states: dict[int, GuildState] = {}
         self._guild_configs: dict[int, dict] = {}
         self._human_teams: dict[int, dict[str, int]] = {}   # guild_id → {team → user_id}
+        self._resolved: dict[int, list[ResolvedMember]] = {}
         self._unresolved: dict[int, list[UnresolvedMember]] = {}
 
         # Register all commands
@@ -86,6 +94,7 @@ class CFBBot(discord.Client):
         ignore_regex: str = config.get("members", {}).get("ignore_regex", "inactive")
 
         human_teams: dict[str, int] = {}
+        resolved: list[ResolvedMember] = []
         unresolved: list[UnresolvedMember] = []
 
         async for member in guild.fetch_members(limit=None):
@@ -110,8 +119,10 @@ class CFBBot(discord.Client):
             else:
                 log.debug("  resolved:   %s → %s", member.display_name, team_name)
                 human_teams[team_name] = member.id
+                resolved.append(ResolvedMember(member.display_name, team_name, member.id))
 
         self._human_teams[guild.id] = human_teams
+        self._resolved[guild.id] = resolved
         self._unresolved[guild.id] = unresolved
 
     # ------------------------------------------------------------------
@@ -125,6 +136,9 @@ class CFBBot(discord.Client):
 
     def get_human_teams(self, guild_id: int) -> dict[str, int]:
         return self._human_teams.get(guild_id, {})
+
+    def get_resolved_members(self, guild_id: int) -> list[ResolvedMember]:
+        return self._resolved.get(guild_id, [])
 
     def get_unresolved_members(self, guild_id: int) -> list[UnresolvedMember]:
         return self._unresolved.get(guild_id, [])

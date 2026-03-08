@@ -71,26 +71,26 @@ def fmt_schedule_show(team: str, assignments: list[Assignment]) -> str:
 
 
 def fmt_teams(
-    ignored: list[str],
-    unparsable: list[str],
+    resolved: list[tuple[str, int]],
+    unrecognized: list[str],
 ) -> str:
-    """Format the /teams response listing unresolved members."""
-    if not ignored and not unparsable:
-        return "All members have been successfully mapped to a team."
+    """Format the /teams response listing all members."""
+    lines = []
 
-    lines = ["Members not mapped to a team:"]
+    if resolved:
+        lines.append("Members:")
+        for team, user_id in sorted(resolved):
+            lines.append(f"  {team} — <@{user_id}>")
 
-    if ignored:
-        lines.append("")
-        lines.append("Ignored (matched ignore_regex):")
-        for name in ignored:
+    if unrecognized:
+        if lines:
+            lines.append("")
+        lines.append("Unrecognized:")
+        for name in sorted(unrecognized):
             lines.append(f"  {name}")
 
-    if unparsable:
-        lines.append("")
-        lines.append("Unparsable (name not recognized):")
-        for name in unparsable:
-            lines.append(f"  {name}")
+    if not lines:
+        lines.append("No members found.")
 
     return "\n".join(lines)
 

@@ -28,27 +28,62 @@ The core scheduling problem is solved with **Google OR-Tools (CP-SAT)**. The Dis
    ```
    This creates a virtual environment and installs dependencies automatically on first run.
 
-## Commands
+## Usage
 
-All commands are admin-only in the current release.
+All commands are admin-only. Set `admin.id` in `config/<guild_id>.toml` to your Discord user ID or a role ID. If unset, the bot warns on every command but allows everyone.
 
-| Command | Description |
-|---|---|
-| `/conference_schedule <team> <weeks>` | Enter a team's conference schedule. `weeks` is a space-separated list of week numbers (1–14). |
-| `/request add <team1> <team2>` | Add a non-conference game request between two teams. |
-| `/schedule create` | Run the optimizer and post the full schedule results. |
-| `/schedule show <team>` | Show the non-conference schedule for a single team. |
-| `/teams` | List Discord members who could not be mapped to a team. |
+> **Note:** State is in-memory only — restarting the bot clears all entered schedules and requests. Persistence is a planned future feature.
 
-## How It Works
+### Step 1 — Enter conference schedules
 
-1. The admin enters each human-controlled team's conference schedule with `/conference_schedule`.
-2. The admin adds desired non-conference matchups with `/request add`.
-3. `/schedule create` feeds all inputs to the CP-SAT solver, which maximizes the number of fulfilled requests while enforcing:
-   - No game scheduled during either team's conference week
-   - No team double-booked in the same week
-   - Non-conference cap enforced (`12 - conference_games` per team)
-4. Results are posted publicly to the channel.
+```
+/conference_schedule <team> <weeks> <home_games>
+```
+
+Enter each human-controlled team's conference schedule before running the solver. Repeat for every team.
+
+- `team` — team name from the official list (autocompleted)
+- `weeks` — space-separated week numbers with conference games, e.g. `1 3 5 7 9 11`
+- `home_games` — how many of those weeks are home games
+
+CPU-controlled teams don't need a conference schedule.
+
+### Step 2 — Add game requests
+
+```
+/request add <team1> <team2>
+```
+
+Add each desired non-conference matchup. Either team can be listed first. CPU teams are valid opponents. Duplicate requests are rejected.
+
+### Step 3 — Run the scheduler
+
+```
+/schedule create
+```
+
+Runs the CP-SAT optimizer and posts the full schedule publicly. Each game is shown as `{home} vs. {away}` or `{away} at {home}`. Games that couldn't be assigned a week are listed as unscheduled.
+
+The solver enforces:
+- No game scheduled during either team's conference week
+- No team double-booked in the same week
+- Non-conference cap per team (`12 - conference_games`)
+
+Home/away assignment is optimized separately to minimize per-team imbalance across conference and non-conference games combined.
+
+### Other commands
+
+```
+/schedule show <team>
+```
+Show one team's non-conference schedule (e.g. `vs. Auburn` or `at Auburn`). Requires `/schedule create` to have been run first.
+
+```
+/teams
+```
+Show all Discord members and their team assignments (e.g. `Alabama — @Josh`). Members the bot couldn't map to a team are listed separately under "Unrecognized". The bot scrapes member display names at startup — members need a display name that matches a team name or known abbreviation. Use this to find who needs their display name fixed.
+
+You can re-run `/conference_schedule` to update a team's schedule and re-run `/schedule create` as many times as needed.
 
 ## Development
 

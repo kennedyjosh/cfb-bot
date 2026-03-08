@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
+
 import discord
 from discord import app_commands
 
 from bot.formatting import fmt_request_added
+
+log = logging.getLogger(__name__)
 
 
 def register(tree: app_commands.CommandTree, bot_ref) -> None:
@@ -26,18 +30,31 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         if not await bot_ref.check_admin(interaction):
             return
 
+        log.debug(
+            "Guild %d: /request add — user=%s team1=%r team2=%r",
+            interaction.guild_id, interaction.user, team1, team2,
+        )
+
         errors: list[str] = []
         if team1 not in bot_ref.valid_teams:
             errors.append(f"Unknown team: {team1}.")
         if team2 not in bot_ref.valid_teams:
             errors.append(f"Unknown team: {team2}.")
         if errors:
+            log.warning(
+                "Guild %d: /request add rejected — unknown team(s): %r vs %r (user=%s)",
+                interaction.guild_id, team1, team2, interaction.user,
+            )
             await interaction.response.send_message(
                 "\n".join(errors), ephemeral=True
             )
             return
 
         if team1 == team2:
+            log.warning(
+                "Guild %d: /request add rejected — team scheduled against itself: %r (user=%s)",
+                interaction.guild_id, team1, interaction.user,
+            )
             await interaction.response.send_message(
                 "A team cannot be scheduled against itself.", ephemeral=True
             )
@@ -46,6 +63,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         state = bot_ref.get_guild_state(interaction.guild_id)
 
         if state.has_duplicate_request(team1, team2):
+            log.warning(
+                "Guild %d: /request add rejected — duplicate request: %s vs %s (user=%s)",
+                interaction.guild_id, team1, team2, interaction.user,
+            )
             await interaction.response.send_message(
                 f"A request between {team1} and {team2} already exists.",
                 ephemeral=True,
@@ -54,6 +75,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
 
         state.add_request(team1, team2)
         total = len(state.requests)
+        log.info(
+            "Guild %d: /request add — %s vs %s (request #%d) (user=%s)",
+            interaction.guild_id, team1, team2, total, interaction.user,
+        )
         msg = fmt_request_added(team1, team2, index=total, total=total)
 
         if bot_ref.admin_warning(interaction.guild_id):

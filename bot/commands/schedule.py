@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+
 import discord
 from discord import app_commands
+
+log = logging.getLogger(__name__)
 
 from bot.formatting import fmt_schedule_result, fmt_schedule_show
 from solver.model import SolverInput, SolverResult, Team
@@ -25,7 +29,14 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
 
         state = bot_ref.get_guild_state(interaction.guild_id)
 
+        log.info(
+            "Guild %d: /schedule create — %d requests, %d conf schedules (user=%s)",
+            interaction.guild_id, len(state.requests),
+            len(state.conference_schedules), interaction.user,
+        )
+
         if not state.requests:
+            log.warning("Guild %d: /schedule create rejected — no requests", interaction.guild_id)
             await interaction.response.send_message(
                 "No requests have been added. Use /request add to add games before running the schedule.",
                 ephemeral=True,
@@ -35,6 +46,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         human_teams = set(bot_ref.get_human_teams(interaction.guild_id).keys())
         missing = state.teams_missing_conf_schedule(human_teams)
         if missing:
+            log.warning(
+                "Guild %d: /schedule create rejected — missing conf schedules: %s",
+                interaction.guild_id, ", ".join(missing),
+            )
             missing_str = ", ".join(missing)
             await interaction.response.send_message(
                 f"Cannot run schedule: no conference schedule found for the following teams: "
@@ -62,6 +77,12 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
 
         state.last_result = result
 
+        log.info(
+            "Guild %d: /schedule create — %d/%d requests fulfilled, %d unscheduled",
+            interaction.guild_id,
+            len(result.assignments), len(state.requests), len(result.unscheduled),
+        )
+
         msg = fmt_schedule_result(result)
         if bot_ref.admin_warning(interaction.guild_id):
             msg = bot_ref.admin_warning(interaction.guild_id) + "\n\n" + msg
@@ -77,7 +98,16 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         if not await bot_ref.check_admin(interaction):
             return
 
+        log.debug(
+            "Guild %d: /schedule show — team=%r (user=%s)",
+            interaction.guild_id, team, interaction.user,
+        )
+
         if team not in bot_ref.valid_teams:
+            log.warning(
+                "Guild %d: /schedule show rejected — unknown team %r (user=%s)",
+                interaction.guild_id, team, interaction.user,
+            )
             await interaction.response.send_message(
                 f"Unknown team: {team}. Team must be from the official team list.",
                 ephemeral=True,
@@ -87,6 +117,10 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
         state = bot_ref.get_guild_state(interaction.guild_id)
 
         if state.last_result is None:
+            log.warning(
+                "Guild %d: /schedule show rejected — no schedule generated yet (user=%s)",
+                interaction.guild_id, interaction.user,
+            )
             await interaction.response.send_message(
                 "No schedule has been generated yet. Run /schedule create first.",
                 ephemeral=True,
@@ -98,6 +132,11 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             for a in state.last_result.assignments
             if a.request.team_a == team or a.request.team_b == team
         ]
+
+        log.debug(
+            "Guild %d: /schedule show — %s has %d NC game(s)",
+            interaction.guild_id, team, len(team_assignments),
+        )
 
         msg = fmt_schedule_show(team, team_assignments)
         if bot_ref.admin_warning(interaction.guild_id):

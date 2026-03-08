@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-03-08
+
+### Changed
+
+- All commands now log invocations, validation failures, and outcomes for traceability
+
 ## [0.5.2] - 2026-03-08
 
 ### Changed

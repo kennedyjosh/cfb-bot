@@ -13,7 +13,8 @@ Update CHANGELOG.md **before** committing, so the changelog entry is part of the
 3. Read the current CHANGELOG.md
 4. Decide: is this change user-facing? (see **Skip Conditions** below)
 5. If yes: add one or more bullets in the correct section (see **Where to Write** below)
-6. Done — do not commit here. The caller will include CHANGELOG.md in their commit.
+6. **Check README.md** — if the staged changes add or remove a slash command, a make target, or a user-facing config key, read `README.md` and update it to match. Stage it alongside CHANGELOG.md. (See **README Check** below.)
+7. Done — do not commit here. The caller will include CHANGELOG.md in their commit.
 
 After editing, the caller should run: `git add CHANGELOG.md` before committing.
 
@@ -80,6 +81,23 @@ If `[Unreleased]` doesn't exist at all, create it at the top of the changelog bo
 - Changelog edits themselves
 
 When skipping, say so briefly: `"Tooling-only change — no changelog entry needed."`
+
+## README Check
+
+Read `README.md` and update any section that has become stale due to the staged changes. Common triggers:
+
+| Staged change | README section to check |
+|---|---|
+| New slash command | `### Other commands` or the relevant step section |
+| Changed command signature (args added/removed) | The command's usage block |
+| Removed slash command | Same — remove or update the entry |
+| New `make` target | `### Make Targets` table |
+| Removed `make` target | Same — remove the row |
+| New user-facing config key | Relevant config documentation |
+
+If README.md needed changes, stage it with `git add README.md` before telling the caller to proceed.
+
+If README.md did not need changes, say so briefly: `"README checked — no updates needed."`
 
 ## Style
 

@@ -20,7 +20,27 @@ After editing, the caller should run: `git add CHANGELOG.md` before committing.
 
 Write to the **`## [Unreleased]`** section for in-progress work not yet assigned a version.
 
-When a version is being released (e.g. `0.1.0`), rename `[Unreleased]` to `## [0.1.0] - YYYY-MM-DD` and create a new empty `## [Unreleased]` above it. Version releases are an intentional act — do not bump the version as part of a routine commit.
+When releasing a version, rename `[Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` and create a new empty `## [Unreleased]` above it. Do not release on every commit — release when a logical milestone is complete (a full feature, a set of fixes ready to ship, etc.).
+
+## Choosing a Version Number
+
+Pick the version based on what's in `[Unreleased]` relative to the last release:
+
+| What's in [Unreleased] | Bump |
+|---|---|
+| Any breaking changes (renamed/removed commands, changed behavior) | MAJOR (`X+1.0.0`) |
+| New features, new commands, new config keys (no breaking changes) | MINOR (`X.Y+1.0`) |
+| Bug fixes only | PATCH (`X.Y.Z+1`) |
+
+Rules:
+- Any breaking change → MAJOR (even if fixes are also present)
+- New features with no breaking changes → MINOR (fixes can ride along)
+- Only fixes → PATCH
+- **Pre-1.0 projects** (`0.x.y`): treat breaking changes as MINOR bumps (`0.Y+1.0`), not MAJOR. Stay at `0.x.y` until the project is intentionally declared stable.
+
+A **breaking change** is anything that requires existing users to modify their workflow: renamed or removed commands, changed input format or required arguments, changed config key names, or behavior that was previously valid becoming invalid.
+
+Look at the subsections in `[Unreleased]` to determine the bump: `### Removed` or breaking `### Changed` → at least MINOR (or MAJOR if post-1.0); `### Added` → at least MINOR; only `### Fixed` → PATCH.
 
 ## Subsections
 

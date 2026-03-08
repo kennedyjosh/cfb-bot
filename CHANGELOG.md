@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `/schedule create` now logs debug detail: human team nc_caps and conf weeks, auto-registered CPU teams, solver wall-clock time, each fulfilled assignment, and each unscheduled request
+
 ### Fixed
 
 - `Team.conference_weeks` now rejects out-of-range week numbers (must be 1–14); previously week 0 or week 15 would silently corrupt `nc_cap`

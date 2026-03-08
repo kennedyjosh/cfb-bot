@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 import discord
 from discord import app_commands
@@ -68,8 +69,34 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
                 conference_home_games=state.conference_home_games.get(team_name, 0),
             )
 
+        # (1) Log each human team's nc_cap and conference weeks
+        log.debug("Guild %d: /schedule create — human teams in solver input:", interaction.guild_id)
+        for team_name, team in sorted(teams.items()):
+            log.debug(
+                "  %s: nc_cap=%d, conf_weeks=%s",
+                team_name, team.nc_cap, sorted(team.conference_weeks),
+            )
+
+        # (2) Log CPU teams that will be auto-registered by the solver
+        cpu_teams = sorted({
+            name
+            for req in state.requests
+            for name in (req.team_a, req.team_b)
+            if name not in teams
+        })
+        if cpu_teams:
+            log.debug(
+                "Guild %d: /schedule create — CPU teams auto-registered: %s",
+                interaction.guild_id, ", ".join(cpu_teams),
+            )
+
         solver_input = SolverInput(teams=teams, requests=state.requests)
+
+        # (3) Log solver wall-clock time
+        t0 = time.monotonic()
         result = solve(solver_input)
+        elapsed = time.monotonic() - t0
+        log.debug("Guild %d: /schedule create — solver took %.3fs", interaction.guild_id, elapsed)
 
         # Assign home/away for all scheduled games
         assigned = assign_home_away(result.assignments, teams)
@@ -82,6 +109,17 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             interaction.guild_id,
             len(result.assignments), len(state.requests), len(result.unscheduled),
         )
+
+        # (4) Log each fulfilled assignment
+        for a in sorted(result.assignments, key=lambda a: (a.week, a.request.team_a)):
+            log.debug(
+                "  Week %d: %s vs. %s (home=%s)",
+                a.week, a.request.team_a, a.request.team_b, a.home_team or "unset",
+            )
+
+        # (5) Log unscheduled requests
+        for r in result.unscheduled:
+            log.debug("  unscheduled: %s vs. %s", r.team_a, r.team_b)
 
         msg = fmt_schedule_result(result)
         if bot_ref.admin_warning(interaction.guild_id):

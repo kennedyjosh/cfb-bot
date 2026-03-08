@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `/request remove` command: admins can now remove a specific non-conference game request by team pair
+- `on_member_update` handler: display name changes automatically update the team mapping, conference schedule, and requests in real time — no bot restart needed
+- `rename_team` in `GuildState` is now idempotent when old and new team name are the same (nulls `last_result` but leaves schedule and requests intact)
+
 ## [0.5.5] - 2026-03-08
 
 ### Changed

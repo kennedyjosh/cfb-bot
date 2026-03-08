@@ -18,6 +18,11 @@ def fmt_request_added(team1: str, team2: str, index: int, total: int) -> str:
     return f"Request added: {team1} vs. {team2}. (Request #{index} of {total})"
 
 
+def fmt_request_removed(team1: str, team2: str) -> str:
+    """Response for a successful /request remove command."""
+    return f"Request removed: {team1} vs. {team2}."
+
+
 def fmt_schedule_result(result: SolverResult) -> str:
     """Format the full schedule result for /schedule."""
     total = len(result.assignments) + len(result.unscheduled)

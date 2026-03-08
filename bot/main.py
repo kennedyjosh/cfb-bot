@@ -34,6 +34,70 @@ class UnresolvedMember:
     is_ignored: bool  # True = matched ignore_regex; False = unparsable
 
 
+def process_member_display_name(
+    *,
+    display_name: str,
+    user_id: int,
+    name_regex: str,
+    ignore_regex: str,
+    valid_teams: set[str],
+) -> ResolvedMember | UnresolvedMember:
+    """Parse one member's display name and return a resolved or unresolved result.
+
+    Pure function — no Discord dependency. Testable independently.
+    Raises ValueError if name_regex is malformed.
+    """
+    team_name, is_ignored = parse_display_name(
+        display_name, name_regex, ignore_regex, valid_teams
+    )
+    if is_ignored:
+        return UnresolvedMember(display_name, user_id, is_ignored=True)
+    if team_name is None:
+        return UnresolvedMember(display_name, user_id, is_ignored=False)
+    return ResolvedMember(display_name, team_name, user_id)
+
+
+def handle_member_display_name_change(
+    *,
+    guild_id: int,
+    before: ResolvedMember | UnresolvedMember,
+    after: ResolvedMember | UnresolvedMember,
+    state: GuildState,
+    human_teams: dict[str, int],
+    resolved: list[ResolvedMember],
+    unresolved: list[UnresolvedMember],
+) -> None:
+    """Apply a display name change to all in-memory state.
+
+    Pure function (no Discord API calls). Testable independently.
+    """
+    # Remove old entry from whichever list they were in
+    if isinstance(before, ResolvedMember):
+        human_teams.pop(before.team, None)
+        resolved[:] = [r for r in resolved if r.user_id != before.user_id]
+    else:
+        unresolved[:] = [u for u in unresolved if u.user_id != before.user_id]
+
+    # Add new entry
+    if isinstance(after, ResolvedMember):
+        human_teams[after.team] = after.user_id
+        resolved.append(after)
+    else:
+        unresolved.append(after)
+
+    # Apply scheduling state changes
+    if isinstance(before, ResolvedMember) and isinstance(after, ResolvedMember):
+        # resolved → resolved: rename (even if same team — rename_team is idempotent)
+        state.rename_team(before.team, after.team)
+    elif isinstance(before, ResolvedMember) and isinstance(after, UnresolvedMember):
+        # resolved → unresolved: drop schedule and requests
+        state.conference_schedules.pop(before.team, None)
+        state.conference_home_games.pop(before.team, None)
+        state.remove_requests(before.team)
+        state.last_result = None
+    # unresolved → resolved or unresolved → unresolved: no scheduling state to change
+
+
 class CFBBot(discord.Client):
     def __init__(self) -> None:
         intents = discord.Intents.default()
@@ -66,6 +130,54 @@ class CFBBot(discord.Client):
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
         await self._init_guild(guild)
+
+    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
+        if before.display_name == after.display_name:
+            return
+
+        guild_id = after.guild.id
+        config = self._guild_configs.get(guild_id, {})
+        name_regex: str = config.get("members", {}).get("name_regex", "^(?P<team>.+)$")
+        ignore_regex: str = config.get("members", {}).get("ignore_regex", "inactive")
+
+        try:
+            before_result = process_member_display_name(
+                display_name=before.display_name,
+                user_id=before.id,
+                name_regex=name_regex,
+                ignore_regex=ignore_regex,
+                valid_teams=self.valid_teams,
+            )
+            after_result = process_member_display_name(
+                display_name=after.display_name,
+                user_id=after.id,
+                name_regex=name_regex,
+                ignore_regex=ignore_regex,
+                valid_teams=self.valid_teams,
+            )
+        except ValueError as exc:
+            log.error("Guild %d: member update parse error: %s", guild_id, exc)
+            return
+
+        state = self.get_guild_state(guild_id)
+        human_teams = self._human_teams.setdefault(guild_id, {})
+        resolved = self._resolved.setdefault(guild_id, [])
+        unresolved = self._unresolved.setdefault(guild_id, [])
+
+        log.info(
+            "Guild %d: member display name change: %r → %r (user_id=%d)",
+            guild_id, before.display_name, after.display_name, after.id,
+        )
+
+        handle_member_display_name_change(
+            guild_id=guild_id,
+            before=before_result,
+            after=after_result,
+            state=state,
+            human_teams=human_teams,
+            resolved=resolved,
+            unresolved=unresolved,
+        )
 
     async def _init_guild(self, guild: discord.Guild) -> None:
         config = load_guild_config(guild.id)
@@ -102,25 +214,27 @@ class CFBBot(discord.Client):
             if member.bot:
                 continue
             try:
-                team_name, is_ignored = parse_display_name(
-                    member.display_name,
-                    name_regex,
-                    ignore_regex,
-                    self.valid_teams,
+                result = process_member_display_name(
+                    display_name=member.display_name,
+                    user_id=member.id,
+                    name_regex=name_regex,
+                    ignore_regex=ignore_regex,
+                    valid_teams=self.valid_teams,
                 )
             except ValueError as exc:
                 log.error("Guild %d: %s — check members.name_regex in config", guild.id, exc)
                 return
-            if is_ignored:
-                log.debug("  ignored:    %s", member.display_name)
-                unresolved.append(UnresolvedMember(member.display_name, member.id, is_ignored=True))
-            elif team_name is None:
-                log.debug("  unresolved: %s", member.display_name)
-                unresolved.append(UnresolvedMember(member.display_name, member.id, is_ignored=False))
+
+            if isinstance(result, UnresolvedMember):
+                if result.is_ignored:
+                    log.debug("  ignored:    %s", member.display_name)
+                else:
+                    log.debug("  unresolved: %s", member.display_name)
+                unresolved.append(result)
             else:
-                log.debug("  resolved:   %s → %s", member.display_name, team_name)
-                human_teams[team_name] = member.id
-                resolved.append(ResolvedMember(member.display_name, team_name, member.id))
+                log.debug("  resolved:   %s → %s", member.display_name, result.team)
+                human_teams[result.team] = result.user_id
+                resolved.append(result)
 
         self._human_teams[guild.id] = human_teams
         self._resolved[guild.id] = resolved

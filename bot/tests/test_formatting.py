@@ -6,6 +6,7 @@ from bot.formatting import (
     ADMIN_WARNING,
     fmt_conf_schedule_set,
     fmt_request_added,
+    fmt_request_removed,
     fmt_schedule_result,
     fmt_schedule_show,
     fmt_teams,
@@ -66,6 +67,21 @@ class TestFmtRequestAdded:
     def test_team_names_appear(self):
         result = fmt_request_added("Notre Dame", "Army", index=2, total=4)
         assert "Notre Dame vs. Army" in result
+
+
+# ---------------------------------------------------------------------------
+# fmt_request_removed
+# ---------------------------------------------------------------------------
+
+
+class TestFmtRequestRemoved:
+    def test_contains_both_team_names(self):
+        result = fmt_request_removed("Alabama", "Auburn")
+        assert "Alabama vs. Auburn" in result
+
+    def test_indicates_removal(self):
+        result = fmt_request_removed("Alabama", "Auburn")
+        assert "Request removed:" in result
 
 
 # ---------------------------------------------------------------------------

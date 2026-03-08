@@ -3,6 +3,11 @@
 from solver.model import Assignment, Request, SolverResult
 
 
+def fmt_cpu_team_rejected(team: str) -> str:
+    """Error response when a CPU team is given to /conference_schedule."""
+    return f"{team} is a CPU team. Conference schedules can only be set for human-controlled teams."
+
+
 def fmt_conf_schedule_set(team: str, weeks: list[int], *, home_games: int, updated: bool) -> str:
     """Response for a successful /conference_schedule command."""
     verb = "Updated" if updated else "Set"

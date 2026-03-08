@@ -10,6 +10,11 @@ class Team:
     is_cpu: bool = False
     conference_home_games: int = 0
 
+    def __post_init__(self) -> None:
+        for w in self.conference_weeks:
+            if not 1 <= w <= 14:
+                raise ValueError(f"Week {w} is out of range. Valid conference weeks are 1–14.")
+
     @property
     def nc_cap(self) -> int:
         """Maximum number of non-conference games this team can be assigned."""

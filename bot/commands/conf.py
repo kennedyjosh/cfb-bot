@@ -7,8 +7,8 @@ import logging
 import discord
 from discord import app_commands
 
-from bot.formatting import fmt_conf_schedule_set
-from bot.parsing import parse_conf_weeks
+from bot.formatting import fmt_conf_schedule_set, fmt_cpu_team_rejected
+from bot.parsing import parse_conf_weeks, resolve_team_name, validate_home_games
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +34,9 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             interaction.guild_id, interaction.user, team, weeks, home_games,
         )
 
-        # Validate team
-        if team not in bot_ref.valid_teams:
+        # Resolve and validate team (accepts abbreviations and case variants)
+        resolved = resolve_team_name(team, bot_ref.valid_teams)
+        if resolved is None:
             log.warning(
                 "Guild %d: /conference_schedule rejected — unknown team %r (user=%s)",
                 interaction.guild_id, team, interaction.user,
@@ -43,6 +44,19 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             await interaction.response.send_message(
                 f"Unknown team: {team}. Team must be from the official team list.",
                 ephemeral=True,
+            )
+            return
+        team = resolved
+
+        # Reject CPU teams
+        human_teams = bot_ref.get_human_teams(interaction.guild_id)
+        if team not in human_teams:
+            log.warning(
+                "Guild %d: /conference_schedule rejected — CPU team %r (user=%s)",
+                interaction.guild_id, team, interaction.user,
+            )
+            await interaction.response.send_message(
+                fmt_cpu_team_rejected(team), ephemeral=True
             )
             return
 
@@ -53,6 +67,16 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             log.warning(
                 "Guild %d: /conference_schedule rejected — invalid weeks %r for %s: %s (user=%s)",
                 interaction.guild_id, weeks, team, e, interaction.user,
+            )
+            await interaction.response.send_message(str(e), ephemeral=True)
+            return
+
+        try:
+            validate_home_games(home_games, num_conf_games=len(week_list))
+        except ValueError as e:
+            log.warning(
+                "Guild %d: /conference_schedule rejected — invalid home_games %d for %s: %s (user=%s)",
+                interaction.guild_id, home_games, team, e, interaction.user,
             )
             await interaction.response.send_message(str(e), ephemeral=True)
             return

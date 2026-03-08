@@ -2,7 +2,7 @@
 
 import pytest
 
-from bot.parsing import parse_conf_weeks, parse_display_name, resolve_team_name
+from bot.parsing import parse_conf_weeks, parse_display_name, resolve_team_name, validate_home_games
 
 
 VALID_TEAMS: set[str] = {
@@ -80,6 +80,30 @@ class TestParseConfWeeks:
 
 
 # ---------------------------------------------------------------------------
+# validate_home_games
+# ---------------------------------------------------------------------------
+
+
+class TestValidateHomeGames:
+    def test_home_games_equal_to_conf_games_is_valid(self):
+        validate_home_games(3, num_conf_games=3)  # should not raise
+
+    def test_home_games_less_than_conf_games_is_valid(self):
+        validate_home_games(2, num_conf_games=5)  # should not raise
+
+    def test_zero_home_games_is_valid(self):
+        validate_home_games(0, num_conf_games=0)  # should not raise
+
+    def test_home_games_exceeds_conf_games_raises(self):
+        with pytest.raises(ValueError, match="home games"):
+            validate_home_games(4, num_conf_games=3)
+
+    def test_home_games_negative_raises(self):
+        with pytest.raises(ValueError, match="home games"):
+            validate_home_games(-1, num_conf_games=3)
+
+
+# ---------------------------------------------------------------------------
 # resolve_team_name
 # ---------------------------------------------------------------------------
 
@@ -106,6 +130,12 @@ class TestResolveTeamName:
 
     def test_abbreviation_unc(self):
         assert resolve_team_name("UNC", VALID_TEAMS) == "North Carolina"
+
+    def test_abbreviation_unc_lowercase(self):
+        assert resolve_team_name("unc", VALID_TEAMS) == "North Carolina"
+
+    def test_team_name_all_caps(self):
+        assert resolve_team_name("ALABAMA", VALID_TEAMS) == "Alabama"
 
     def test_abbreviation_cal(self):
         assert resolve_team_name("Cal", VALID_TEAMS) == "California"

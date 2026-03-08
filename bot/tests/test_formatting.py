@@ -5,6 +5,7 @@ import pytest
 from bot.formatting import (
     ADMIN_WARNING,
     fmt_conf_schedule_set,
+    fmt_cpu_team_rejected,
     fmt_request_added,
     fmt_request_removed,
     fmt_schedule_result,
@@ -12,6 +13,21 @@ from bot.formatting import (
     fmt_teams,
 )
 from solver.model import Assignment, Request, SolverResult
+
+
+# ---------------------------------------------------------------------------
+# fmt_cpu_team_rejected
+# ---------------------------------------------------------------------------
+
+
+class TestFmtCpuTeamRejected:
+    def test_contains_team_name(self):
+        text = fmt_cpu_team_rejected("Army")
+        assert "Army" in text
+
+    def test_indicates_cpu_team(self):
+        text = fmt_cpu_team_rejected("Army")
+        assert "CPU" in text
 
 
 # ---------------------------------------------------------------------------

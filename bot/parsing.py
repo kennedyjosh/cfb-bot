@@ -44,6 +44,21 @@ def parse_conf_weeks(weeks_str: str) -> list[int]:
     return sorted(set(weeks))
 
 
+def validate_home_games(home_games: int, *, num_conf_games: int) -> None:
+    """Validate that home_games is a sensible value for the given conference schedule size.
+
+    Raises ValueError with a user-facing message if invalid.
+    """
+    if home_games < 0:
+        raise ValueError(
+            f"home games cannot be negative (got {home_games})."
+        )
+    if home_games > num_conf_games:
+        raise ValueError(
+            f"home games ({home_games}) cannot exceed the number of conference games ({num_conf_games})."
+        )
+
+
 def resolve_team_name(raw: str, valid_teams: set[str]) -> str | None:
     """Resolve a raw extracted name to a canonical team name.
 

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `Team.conference_weeks` now rejects out-of-range week numbers (must be 1–14); previously week 0 or week 15 would silently corrupt `nc_cap`
+- `/conference_schedule` now resolves team name abbreviations (e.g. `UNC` → `North Carolina`) and is case-insensitive
+- `/conference_schedule` now rejects CPU teams with a clear error message
+- `/conference_schedule` now rejects a `home_games` value greater than the number of conference games entered
+
 ## [0.5.6] - 2026-03-08
 
 ### Added

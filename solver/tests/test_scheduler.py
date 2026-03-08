@@ -351,3 +351,15 @@ class TestTeamModel:
     def test_conference_home_games_stored(self):
         team = Team(name="Alabama", conference_weeks=frozenset([1, 2, 3]), conference_home_games=2)
         assert team.conference_home_games == 2
+
+    def test_conference_week_zero_raises(self):
+        with pytest.raises(ValueError, match="Week 0"):
+            Team(name="Alabama", conference_weeks=frozenset([0, 1, 2]))
+
+    def test_conference_week_15_raises(self):
+        with pytest.raises(ValueError, match="Week 15"):
+            Team(name="Alabama", conference_weeks=frozenset([15]))
+
+    def test_conference_week_negative_raises(self):
+        with pytest.raises(ValueError, match="Week -1"):
+            Team(name="Alabama", conference_weeks=frozenset([-1]))

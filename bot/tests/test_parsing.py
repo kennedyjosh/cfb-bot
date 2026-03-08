@@ -15,12 +15,8 @@ VALID_TEAMS: set[str] = {
     "Georgia",
     "LSU",
     "Notre Dame",
-}
-
-NICKNAMES: dict[str, str] = {
-    "App State": "Appalachian State",
-    "Bama": "Alabama",
-    "Noles": "Florida State",
+    "North Carolina",
+    "California",
 }
 
 DEFAULT_NAME_REGEX = r"^(?P<team>.+)$"
@@ -90,52 +86,58 @@ class TestParseConfWeeks:
 
 class TestResolveTeamName:
     def test_exact_match(self):
-        assert resolve_team_name("Alabama", NICKNAMES, VALID_TEAMS) == "Alabama"
+        assert resolve_team_name("Alabama", VALID_TEAMS) == "Alabama"
 
     def test_exact_match_multiword(self):
-        assert (
-            resolve_team_name("Appalachian State", NICKNAMES, VALID_TEAMS)
-            == "Appalachian State"
-        )
+        assert resolve_team_name("Appalachian State", VALID_TEAMS) == "Appalachian State"
 
-    def test_nickname_match(self):
-        assert (
-            resolve_team_name("App State", NICKNAMES, VALID_TEAMS)
-            == "Appalachian State"
-        )
+    def test_abbreviation_app_state(self):
+        assert resolve_team_name("App State", VALID_TEAMS) == "Appalachian State"
 
-    def test_nickname_case_insensitive(self):
-        assert (
-            resolve_team_name("app state", NICKNAMES, VALID_TEAMS)
-            == "Appalachian State"
-        )
-        assert (
-            resolve_team_name("APP STATE", NICKNAMES, VALID_TEAMS)
-            == "Appalachian State"
-        )
+    def test_abbreviation_bama(self):
+        assert resolve_team_name("Bama", VALID_TEAMS) == "Alabama"
 
-    def test_nickname_mixed_case(self):
-        assert resolve_team_name("bama", NICKNAMES, VALID_TEAMS) == "Alabama"
+    def test_abbreviation_case_insensitive(self):
+        assert resolve_team_name("app state", VALID_TEAMS) == "Appalachian State"
+        assert resolve_team_name("APP STATE", VALID_TEAMS) == "Appalachian State"
+
+    def test_abbreviation_mixed_case(self):
+        assert resolve_team_name("bama", VALID_TEAMS) == "Alabama"
+
+    def test_abbreviation_unc(self):
+        assert resolve_team_name("UNC", VALID_TEAMS) == "North Carolina"
+
+    def test_abbreviation_cal(self):
+        assert resolve_team_name("Cal", VALID_TEAMS) == "California"
+
+    def test_team_name_case_insensitive_fallback(self):
+        # "alabama" (lowercase) should resolve even without an abbreviation entry
+        assert resolve_team_name("alabama", VALID_TEAMS) == "Alabama"
+
+    def test_team_name_case_insensitive_multiword(self):
+        assert resolve_team_name("notre dame", VALID_TEAMS) == "Notre Dame"
+
+    def test_punctuation_stripped(self):
+        assert resolve_team_name("Oregon+", VALID_TEAMS | {"Oregon"}) == "Oregon"
+
+    def test_punctuation_stripped_period(self):
+        assert resolve_team_name("Alabama.", VALID_TEAMS) == "Alabama"
+
+    def test_mascot_not_resolved(self):
+        # "Noles" was removed — mascot abbreviations are not supported
+        assert resolve_team_name("Noles", VALID_TEAMS) is None
 
     def test_unknown_team_returns_none(self):
-        assert resolve_team_name("Harvard", NICKNAMES, VALID_TEAMS) is None
+        assert resolve_team_name("Harvard", VALID_TEAMS) is None
 
-    def test_unknown_nickname_not_in_teams_returns_none(self):
-        assert resolve_team_name("Crimson Tide", NICKNAMES, VALID_TEAMS) is None
+    def test_unknown_abbreviation_not_in_teams_returns_none(self):
+        assert resolve_team_name("Crimson Tide", VALID_TEAMS) is None
 
     def test_internal_whitespace_normalized(self):
-        # Double space is collapsed to single space, so "App  State" → "App State" → "Appalachian State"
-        assert resolve_team_name("App  State", NICKNAMES, VALID_TEAMS) == "Appalachian State"
-
-    def test_extra_leading_trailing_whitespace_handled(self):
-        # resolve_team_name itself expects stripped input; caller strips
-        assert resolve_team_name("Alabama", NICKNAMES, VALID_TEAMS) == "Alabama"
-
-    def test_empty_nicknames(self):
-        assert resolve_team_name("Alabama", {}, VALID_TEAMS) == "Alabama"
+        assert resolve_team_name("App  State", VALID_TEAMS) == "Appalachian State"
 
     def test_empty_valid_teams(self):
-        assert resolve_team_name("Alabama", NICKNAMES, set()) is None
+        assert resolve_team_name("Alabama", set()) is None
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +148,7 @@ class TestResolveTeamName:
 class TestParseDisplayName:
     def _parse(self, display_name: str, *, name_regex=DEFAULT_NAME_REGEX) -> tuple:
         return parse_display_name(
-            display_name, name_regex, DEFAULT_IGNORE_REGEX, NICKNAMES, VALID_TEAMS
+            display_name, name_regex, DEFAULT_IGNORE_REGEX, VALID_TEAMS
         )
 
     def test_simple_team_name(self):
@@ -154,7 +156,7 @@ class TestParseDisplayName:
         assert team == "Alabama"
         assert ignored is False
 
-    def test_nickname_resolved(self):
+    def test_abbreviation_resolved(self):
         team, ignored = self._parse("App State")
         assert team == "Appalachian State"
         assert ignored is False
@@ -184,7 +186,6 @@ class TestParseDisplayName:
             "[Alabama] Josh",
             r"\[(?P<team>[^\]]+)\]",
             DEFAULT_IGNORE_REGEX,
-            NICKNAMES,
             VALID_TEAMS,
         )
         assert team == "Alabama"
@@ -195,18 +196,16 @@ class TestParseDisplayName:
             "Josh",
             r"\[(?P<team>[^\]]+)\]",
             DEFAULT_IGNORE_REGEX,
-            NICKNAMES,
             VALID_TEAMS,
         )
         assert team is None
         assert ignored is False
 
-    def test_custom_name_regex_nickname_via_bracket(self):
+    def test_custom_name_regex_abbreviation_via_bracket(self):
         team, ignored = parse_display_name(
             "[App State] Josh",
             r"\[(?P<team>[^\]]+)\]",
             DEFAULT_IGNORE_REGEX,
-            NICKNAMES,
             VALID_TEAMS,
         )
         assert team == "Appalachian State"
@@ -238,7 +237,6 @@ class TestParseDisplayName:
             "Bot Account",
             DEFAULT_NAME_REGEX,
             r"bot",
-            NICKNAMES,
             VALID_TEAMS,
         )
         assert team is None

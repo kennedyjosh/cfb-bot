@@ -3,6 +3,23 @@
 import re
 
 
+# Unambiguous shorthand that always refers to one specific school.
+# Abbreviations of school/city/state names only — not mascot names.
+ABBREVIATIONS: dict[str, str] = {
+    "App State": "Appalachian State",
+    "Bama": "Alabama",
+    "BC": "Boston College",
+    "Cal": "California",
+    "Cuse": "Syracuse",
+    "GT": "Georgia Tech",
+    "ND": "Notre Dame",
+    "Pitt": "Pittsburgh",
+    "TAMU": "Texas A&M",
+    "UNC": "North Carolina",
+    "WVU": "West Virginia",
+}
+
+
 def parse_conf_weeks(weeks_str: str) -> list[int]:
     """Parse a space-separated string of week numbers into a sorted, deduplicated list.
 
@@ -27,30 +44,45 @@ def parse_conf_weeks(weeks_str: str) -> list[int]:
     return sorted(set(weeks))
 
 
-def resolve_team_name(
-    raw: str, nicknames: dict[str, str], valid_teams: set[str]
-) -> str | None:
+def resolve_team_name(raw: str, valid_teams: set[str]) -> str | None:
     """Resolve a raw extracted name to a canonical team name.
 
-    Performs nickname lookup (case-insensitive) then validates against valid_teams.
+    1. Normalize whitespace and strip punctuation.
+    2. Check ABBREVIATIONS (case-insensitive).
+    3. Exact match against valid_teams.
+    4. Case-insensitive fallback against valid_teams.
+
     Returns the canonical name, or None if not found.
     """
+    # Normalize whitespace
     normalized = " ".join(raw.split())
+    # Strip punctuation (keep letters, digits, spaces, ampersand)
+    cleaned = re.sub(r"[^\w\s&]", "", normalized).strip()
 
-    lower = normalized.lower()
-    for nick, canonical in nicknames.items():
-        if nick.lower() == lower:
-            normalized = canonical
+    # Abbreviation lookup (case-insensitive)
+    lower = cleaned.lower()
+    for abbr, canonical in ABBREVIATIONS.items():
+        if abbr.lower() == lower:
+            cleaned = canonical
             break
 
-    return normalized if normalized in valid_teams else None
+    # Exact match
+    if cleaned in valid_teams:
+        return cleaned
+
+    # Case-insensitive fallback
+    lower_cleaned = cleaned.lower()
+    for team in valid_teams:
+        if team.lower() == lower_cleaned:
+            return team
+
+    return None
 
 
 def parse_display_name(
     display_name: str,
     name_regex: str,
     ignore_regex: str,
-    nicknames: dict[str, str],
     valid_teams: set[str],
 ) -> tuple[str | None, bool]:
     """Parse a Discord display name into a resolved team name.
@@ -76,5 +108,5 @@ def parse_display_name(
     if not raw or not raw.strip():
         return None, False
 
-    team = resolve_team_name(raw.strip(), nicknames, valid_teams)
+    team = resolve_team_name(raw.strip(), valid_teams)
     return team, False

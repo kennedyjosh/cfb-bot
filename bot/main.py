@@ -11,7 +11,7 @@ import discord
 from discord import app_commands
 
 from bot.commands import conf, request, schedule, teams
-from bot.config import load_guild_config, load_nicknames, load_valid_teams
+from bot.config import load_guild_config, load_valid_teams
 from bot.formatting import ADMIN_WARNING, NO_PERMISSION
 from bot.parsing import parse_display_name
 from bot.state import GuildState
@@ -33,7 +33,6 @@ class CFBBot(discord.Client):
         self.tree = app_commands.CommandTree(self)
 
         self.valid_teams: set[str] = load_valid_teams()
-        self.nicknames: dict[str, str] = load_nicknames()
 
         # Per-guild data
         self._guild_states: dict[int, GuildState] = {}
@@ -95,7 +94,6 @@ class CFBBot(discord.Client):
                 member.display_name,
                 name_regex,
                 ignore_regex,
-                self.nicknames,
                 self.valid_teams,
             )
             if is_ignored:

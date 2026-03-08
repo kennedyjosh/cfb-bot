@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Team name resolution now strips punctuation and matches case-insensitively, so inputs like `"alabama"` or `"Oregon+"` resolve correctly
+- Abbreviations (e.g. `App State`, `Bama`, `UNC`) are now hardcoded in the bot rather than loaded from `config/nicknames.toml`; only unambiguous school/city abbreviations are supported — mascot names are not
+
+### Removed
+
+- `config/nicknames.toml` — abbreviations are no longer user-editable config
+
 ## [0.2.2] - 2026-03-08
 
 ### Fixed

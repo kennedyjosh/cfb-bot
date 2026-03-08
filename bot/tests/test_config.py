@@ -1,31 +1,11 @@
 """Tests for bot/config.py and the config data files."""
 
-import tomllib
-from pathlib import Path
+from bot.config import load_valid_teams
+from bot.parsing import ABBREVIATIONS
 
 
-NICKNAMES_TOML = Path(__file__).parent.parent.parent / "config" / "nicknames.toml"
-
-
-def test_nicknames_toml_loads_without_error():
-    """nicknames.toml must be valid TOML with no duplicate keys."""
-    with open(NICKNAMES_TOML, "rb") as f:
-        data = tomllib.load(f)
-    assert "nicknames" in data
-
-
-def test_nicknames_toml_no_duplicate_keys():
-    """Manually scan for duplicate keys since tomllib silently drops them or errors."""
-    # tomllib already errors on duplicates, so if test_nicknames_toml_loads_without_error
-    # passes, there are no duplicates. This test double-checks by scanning raw text.
-    lines = NICKNAMES_TOML.read_text().splitlines()
-    keys_seen = []
-    duplicates = []
-    for line in lines:
-        stripped = line.strip()
-        if "=" in stripped and not stripped.startswith("#"):
-            key = stripped.split("=")[0].strip().strip('"')
-            if key in keys_seen:
-                duplicates.append(key)
-            keys_seen.append(key)
-    assert duplicates == [], f"Duplicate nickname keys found: {duplicates}"
+def test_abbreviation_targets_are_valid_teams():
+    """Every value in ABBREVIATIONS must be a canonical name from teams.txt."""
+    valid = load_valid_teams()
+    bad = {abbr: target for abbr, target in ABBREVIATIONS.items() if target not in valid}
+    assert bad == {}, f"Abbreviations point to unknown teams: {bad}"

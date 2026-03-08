@@ -5,9 +5,15 @@ ARG HTTPS_PROXY
 ENV HTTP_PROXY=$HTTP_PROXY
 ENV HTTPS_PROXY=$HTTPS_PROXY
 
-# Trust the sandbox proxy CA certificate
-COPY proxy-ca.crt /usr/local/share/ca-certificates/proxy-ca.crt
-RUN apt-get update -q && apt-get install -y -q ca-certificates && update-ca-certificates
+# Optionally trust a sandbox proxy CA cert.
+# Provided via --secret id=proxy_cert,src=proxy-ca.crt at build time.
+# If the secret is absent (default on Mac/CI), this is a no-op.
+RUN --mount=type=secret,id=proxy_cert,required=false \
+    if [ -f /run/secrets/proxy_cert ]; then \
+      apt-get update -q && apt-get install -y -q ca-certificates && \
+      cp /run/secrets/proxy_cert /usr/local/share/ca-certificates/proxy-ca.crt && \
+      update-ca-certificates; \
+    fi
 
 WORKDIR /app
 

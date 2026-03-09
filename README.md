@@ -62,6 +62,12 @@ Add each desired non-conference matchup. Either team can be listed first. CPU te
 
 Remove a previously added request.
 
+```
+/request show [team]
+```
+
+List all pending requests involving a team. Omit `team` to look up your own team's requests.
+
 ### Step 3 — Run the scheduler
 
 ```

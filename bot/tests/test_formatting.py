@@ -8,6 +8,8 @@ from bot.formatting import (
     fmt_cpu_team_rejected,
     fmt_request_added,
     fmt_request_removed,
+    fmt_request_show,
+    fmt_request_show_all,
     fmt_schedule_result,
     fmt_schedule_show,
     fmt_teams,
@@ -115,6 +117,107 @@ class TestFmtRequestRemoved:
     def test_indicates_removal(self):
         result = fmt_request_removed("Alabama", "Auburn")
         assert "Request removed:" in result
+
+
+# ---------------------------------------------------------------------------
+# fmt_request_show
+# ---------------------------------------------------------------------------
+
+
+class TestFmtRequestShow:
+    def test_no_requests(self):
+        result = fmt_request_show("Alabama", [])
+        assert "Alabama" in result
+        assert "No requests" in result
+
+    def test_single_request_as_team_a_shows_opponent(self):
+        result = fmt_request_show("Alabama", [_req("Alabama", "Auburn")])
+        assert "Auburn" in result
+        assert "Alabama" not in result.splitlines()[1]
+
+    def test_single_request_as_team_b_shows_opponent(self):
+        result = fmt_request_show("Auburn", [_req("Alabama", "Auburn")])
+        assert "Alabama" in result
+        assert "Auburn" not in result.splitlines()[1]
+
+    def test_header_shows_team_name(self):
+        result = fmt_request_show("Alabama", [_req("Alabama", "Auburn"), _req("Alabama", "Georgia")])
+        assert "Alabama" in result
+
+    def test_header_has_no_count(self):
+        result = fmt_request_show("Alabama", [_req("Alabama", "Auburn"), _req("Alabama", "Georgia")])
+        assert "(2)" not in result
+
+    def test_multiple_requests_all_listed(self):
+        reqs = [_req("Alabama", "Auburn"), _req("Alabama", "Georgia"), _req("Alabama", "LSU")]
+        result = fmt_request_show("Alabama", reqs)
+        assert "Auburn" in result
+        assert "Georgia" in result
+        assert "LSU" in result
+
+    def test_opponent_shown_as_bullet(self):
+        result = fmt_request_show("Alabama", [_req("Alabama", "Auburn")])
+        assert "• Auburn" in result
+
+    def test_team_name_in_header(self):
+        result = fmt_request_show("Notre Dame", [_req("Notre Dame", "Army")])
+        assert "Notre Dame" in result
+
+
+# ---------------------------------------------------------------------------
+# fmt_request_show_all
+# ---------------------------------------------------------------------------
+
+
+class TestFmtRequestShowAll:
+    def test_no_requests(self):
+        result = fmt_request_show_all([], human_teams=set())
+        assert "No requests" in result
+
+    def test_requests_shown_as_bullets(self):
+        result = fmt_request_show_all([_req("Alabama", "Auburn")], human_teams={"Alabama", "Auburn"})
+        assert "• " in result
+
+    def test_user_vs_user_section(self):
+        result = fmt_request_show_all([_req("Alabama", "Auburn")], human_teams={"Alabama", "Auburn"})
+        assert "User vs. user:" in result
+        assert "User vs. CPU:" not in result
+
+    def test_user_vs_cpu_section(self):
+        result = fmt_request_show_all([_req("Alabama", "Army")], human_teams={"Alabama"})
+        assert "User vs. CPU:" in result
+        assert "User vs. user:" not in result
+
+    def test_both_sections_present(self):
+        reqs = [_req("Alabama", "Auburn"), _req("Alabama", "Army")]
+        result = fmt_request_show_all(reqs, human_teams={"Alabama", "Auburn"})
+        assert "User vs. user:" in result
+        assert "User vs. CPU:" in result
+
+    def test_user_vs_user_alphabetical(self):
+        # Auburn < Georgia alphabetically — Auburn should be listed first regardless of add order
+        result = fmt_request_show_all([_req("Georgia", "Auburn")], human_teams={"Georgia", "Auburn"})
+        assert "Auburn / Georgia" in result
+
+    def test_user_vs_cpu_human_first(self):
+        # CPU team listed as team_a — human team should be swapped to front
+        result = fmt_request_show_all([_req("Army", "Alabama")], human_teams={"Alabama"})
+        assert "Alabama / Army" in result
+
+    def test_user_vs_cpu_already_human_first(self):
+        result = fmt_request_show_all([_req("Alabama", "Army")], human_teams={"Alabama"})
+        assert "Alabama / Army" in result
+
+    def test_user_vs_user_before_user_vs_cpu(self):
+        reqs = [_req("Alabama", "Army"), _req("Alabama", "Auburn")]
+        result = fmt_request_show_all(reqs, human_teams={"Alabama", "Auburn"})
+        assert result.index("User vs. user:") < result.index("User vs. CPU:")
+
+    def test_multiple_requests_all_listed(self):
+        reqs = [_req("Alabama", "Auburn"), _req("Georgia", "Army")]
+        result = fmt_request_show_all(reqs, human_teams={"Alabama", "Auburn", "Georgia"})
+        assert "Alabama / Auburn" in result
+        assert "Georgia / Army" in result
 
 
 # ---------------------------------------------------------------------------

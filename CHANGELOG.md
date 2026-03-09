@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-03-09
+
+### Added
+
+- `/request show [team]` command: shows all pending requests involving a team; omit `team` to default to the invoking user's own team
+- `/request show all` shows all requests split into user vs. user and user vs. CPU sections
+
 ## [0.7.0] - 2026-03-08
 
 ### Changed

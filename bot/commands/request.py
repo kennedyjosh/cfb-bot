@@ -7,7 +7,7 @@ import logging
 import discord
 from discord import app_commands
 
-from bot.formatting import fmt_request_added, fmt_request_removed
+from bot.formatting import fmt_request_added, fmt_request_removed, fmt_request_show, fmt_request_show_all
 
 log = logging.getLogger(__name__)
 
@@ -154,5 +154,68 @@ def register(tree: app_commands.CommandTree, bot_ref) -> None:
             if current.lower() in t.lower()
         ]
         return matches[:25]
+
+    @request_group.command(
+        name="show", description="Show requests involving a team."
+    )
+    @app_commands.describe(
+        team="Team to look up (omit to use your own team).",
+    )
+    async def request_show(
+        interaction: discord.Interaction, team: str | None = None
+    ) -> None:
+        if not await bot_ref.check_admin(interaction):
+            return
+
+        state = bot_ref.get_guild_state(interaction.guild_id)
+
+        if team == "all":
+            log.debug(
+                "Guild %d: /request show all — user=%s",
+                interaction.guild_id, interaction.user,
+            )
+            human_teams = set(bot_ref.get_human_teams(interaction.guild_id).keys())
+            await interaction.response.send_message(fmt_request_show_all(state.requests, human_teams))
+            return
+
+        if team is None:
+            # Resolve invoking user to their team
+            human_teams = bot_ref.get_human_teams(interaction.guild_id)
+            user_id = interaction.user.id
+            team = next((t for t, uid in human_teams.items() if uid == user_id), None)
+            if team is None:
+                await interaction.response.send_message(
+                    "You are not registered as a team in this dynasty. "
+                    "Please pass a team name explicitly.",
+                    ephemeral=True,
+                )
+                return
+        elif team not in bot_ref.valid_teams:
+            await interaction.response.send_message(
+                f"Unknown team: {team}.", ephemeral=True
+            )
+            return
+
+        log.debug(
+            "Guild %d: /request show — user=%s team=%r",
+            interaction.guild_id, interaction.user, team,
+        )
+
+        matching = [r for r in state.requests if r.team_a == team or r.team_b == team]
+        await interaction.response.send_message(fmt_request_show(team, matching))
+
+    @request_show.autocomplete("team")
+    async def show_team_autocomplete(
+        interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        choices = []
+        if "all".startswith(current.lower()):
+            choices.append(app_commands.Choice(name="all", value="all"))
+        choices += [
+            app_commands.Choice(name=t, value=t)
+            for t in sorted(bot_ref.valid_teams)
+            if current.lower() in t.lower()
+        ]
+        return choices[:25]
 
     tree.add_command(request_group)

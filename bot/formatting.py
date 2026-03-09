@@ -28,6 +28,49 @@ def fmt_request_removed(team1: str, team2: str) -> str:
     return f"Request removed: {team1} vs. {team2}."
 
 
+def fmt_request_show(team: str, requests: list[Request]) -> str:
+    """Response for /request show <team> — lists opponents in pending requests for a given team."""
+    if not requests:
+        return f"No requests found involving {team}."
+    lines = [f"Requests involving {team}:"]
+    for r in requests:
+        opponent = r.team_b if r.team_a == team else r.team_a
+        lines.append(f"  • {opponent}")
+    return "\n".join(lines)
+
+
+def fmt_request_show_all(requests: list[Request], human_teams: set[str]) -> str:
+    """Response for /request show all — lists every pending request, split by type."""
+    if not requests:
+        return "No requests have been added yet."
+
+    user_vs_user: list[tuple[str, str]] = []
+    user_vs_cpu: list[tuple[str, str]] = []
+
+    for r in requests:
+        a_human = r.team_a in human_teams
+        b_human = r.team_b in human_teams
+        if a_human and b_human:
+            pair = (r.team_a, r.team_b) if r.team_a < r.team_b else (r.team_b, r.team_a)
+            user_vs_user.append(pair)
+        else:
+            # Human team first; if both CPU, preserve original order
+            pair = (r.team_b, r.team_a) if b_human and not a_human else (r.team_a, r.team_b)
+            user_vs_cpu.append(pair)
+
+    lines = []
+    if user_vs_user:
+        lines.append("User vs. user:")
+        for a, b in user_vs_user:
+            lines.append(f"  • {a} / {b}")
+    if user_vs_cpu:
+        lines.append("")
+        lines.append("User vs. CPU:")
+        for a, b in user_vs_cpu:
+            lines.append(f"  • {a} / {b}")
+    return "\n".join(lines)
+
+
 def _unscheduled_reason(
     req: Request,
     teams: dict[str, Team],
